@@ -75,9 +75,11 @@ def getSongs(tag):
     
     conn = sqlite3.connect('test.db')
     cursor = conn.cursor()
-    term = "'" + tag + "'"
-    print(term)
+    #term = "'" + tag + "'"
+   # print(tag)
     cursor.execute("SELECT keyword FROM masterPlaylist WHERE keyword ="+'"'+tag+'"')
+   #print("this is the checking of stuff")
+   # print(cursor.fetchone())
 
     if (cursor.fetchone() == None):
         url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=100"
@@ -95,7 +97,7 @@ def getSongs(tag):
                 song["url"] = results["tracks"]["items"][0]["preview_url"]
                 songlist.append(song)
         insertDBMaster(songlist, tag)
-    conn.commit()
+        conn.commit()
     conn.close()
     #lookup the entire playlist, pick however many songs they want, create a user playlist, insert it into the db, and then render
     return render_template("results.html", songs = songlist)
@@ -103,6 +105,7 @@ def getSongs(tag):
 def insertDBMaster(mPlaylist, keyword):
     conn = sqlite3.connect('/Users/Vanessa/test.db')
     cursor = conn.cursor()
+    print("should be entering this only once tbh")
     #iterate over the master playlist creating/inserting the songs
     insertSongs = []
     for song in mPlaylist:
