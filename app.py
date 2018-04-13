@@ -12,7 +12,7 @@ def createPlaylist():
    # cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer, name text, artist text, url text)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer, playlist, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
     conn.commit()
     #conn.close()
@@ -141,7 +141,7 @@ def insertDBMaster(mPlaylist, keyword):
     cursor.executemany("INSERT INTO Playlist VALUES (?,?)", insertPlaylist)
     conn.commit()
     #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
-    cursor.execute("INSERT INTO masterPlaylist VALUES (" + pID + ", "+"'"+keyword+'"'+", " + mPlaylist.length() + ")")
+    cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
     conn.commit()
 
 if (__name__ == "__main__"):
