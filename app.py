@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-import urllib2, json, requests, spotipy, sqlite3
-import sqlite3
+import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
 import sys 
@@ -19,7 +18,8 @@ def createPlaylist():
     #conn.close()
 
 try:
-    conn = sqlite3.connect('/Users/Vanessa/test.db')
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     cursor.execute('SELECT SQLITE_VERSION() ')
     data = cursor.fetchone()
@@ -72,8 +72,8 @@ def getWeatherSongs():
 
 
 def getSongs(tag):
-    
-    conn = sqlite3.connect('test.db')
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     #term = "'" + tag + "'"
    # print(tag)
@@ -103,7 +103,8 @@ def getSongs(tag):
     return render_template("results.html", songs = songlist)
 
 def insertDBMaster(mPlaylist, keyword):
-    conn = sqlite3.connect('/Users/Vanessa/test.db')
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     print("should be entering this only once tbh")
     #iterate over the master playlist creating/inserting the songs
