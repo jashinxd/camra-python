@@ -78,7 +78,7 @@ def getSongs(tag):
     term = "'" + tag + "'"
     print(term)
     cursor.execute("SELECT keyword FROM masterPlaylist WHERE keyword ="+'"'+tag+'"')
-    
+
     if (cursor.fetchone() == None):
         url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=100"
         requested = urllib2.urlopen(url)
@@ -94,7 +94,7 @@ def getSongs(tag):
             if (results["tracks"]["items"][0]["preview_url"] != None):
                 song["url"] = results["tracks"]["items"][0]["preview_url"]
                 songlist.append(song)
-            insertDBMaster(songlist, tag)
+        insertDBMaster(songlist, tag)
     conn.commit()
     conn.close()
     #lookup the entire playlist, pick however many songs they want, create a user playlist, insert it into the db, and then render
