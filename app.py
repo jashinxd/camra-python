@@ -120,7 +120,7 @@ def insertDBMaster(mPlaylist, keyword):
     insertSongs = []
     insertPlaylist = []
     insertMaster = []
-    pID = abs(hash(keyword)) % (10 ** 8))
+    pID = abs(hash(keyword)) % (10 ** 8)
     for song in mPlaylist:
         #create the hash for the song
         songName = song["name"]
@@ -139,10 +139,10 @@ def insertDBMaster(mPlaylist, keyword):
     #conn.close()
     #create a playlist entry with all the songs in mPlaylist (some for loop)
     cursor.executemany("INSERT INTO Playlist VALUES (?,?)", insertPlaylist)
-    cursor.commit()
+    conn.commit()
     #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
-    cursor.execute("INSERT INTO masterPlaylist VALUES (" + pID + ", "+"'"+keyword+'"'+", " + mPlaylist.length() + ")"
-    cursor.commit()
+    cursor.execute("INSERT INTO masterPlaylist VALUES (" + pID + ", "+"'"+keyword+'"'+", " + mPlaylist.length() + ")")
+    conn.commit()
 
 if (__name__ == "__main__"):
     app.debug = True
