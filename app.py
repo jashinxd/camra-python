@@ -11,13 +11,13 @@ def index():
         form = request.form
         print(form)
         selection = form["category"]
-        mood = form["moodoptions"]
+        mood = form["moodoption"]
         if selection == "weather":
-            getWeatherSongs()
+            return getWeatherSongs()
         elif selection == "location":
-            getLocationSongs()
+            return getLocationSongs()
         elif selection == "mood":
-            getSongs(mood)
+            return getSongs(mood)
 
 def getLocation():
     url = "http://ipinfo.io/"
@@ -27,7 +27,7 @@ def getLocation():
             
 def getLocationSongs():
     tag = getLocation()
-    getSongs(tag)
+    return getSongs(tag)
 
 def getWeather():
     city = getLocation()
@@ -40,7 +40,7 @@ def getWeather():
 
 def getWeatherSongs():
     tag = getWeather()
-    getSongs(tag)
+    return getSongs(tag)
     
 def getSongs(tag):
     url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json"
@@ -49,8 +49,9 @@ def getSongs(tag):
     r = json.loads(result)
     songlist = []
     for song in r["tracks"]["track"]:
-        print(song["name"])
+        print(song["artist"]["name"])
         songlist.append(song)
+    return render_template("results.html", songs = songlist)
 
 if (__name__ == "__main__"):
     app.debug = True
