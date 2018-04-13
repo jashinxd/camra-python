@@ -11,22 +11,37 @@ def index():
         form = request.form
         print(form)
         selection = form["category"]
+        mood = form["moodoption"]
         if selection == "weather":
-            getWeatherSongs()
+            return getWeatherSongs()
         elif selection == "location":
-            getLocationSongs()
+            return getLocationSongs()
         elif selection == "mood":
-            getMoodSongs()
+            return getSongs(mood)
 
-def getLocationSongs():
+def getLocation():
     url = "http://ipinfo.io/"
     results = requests.get(url).json()
     city = results["city"]
-    getSongs(city)
+    return city
+            
+def getLocationSongs():
+    tag = getLocation()
+    return getSongs(tag)
 
-#def getWeatherSongs():
-#    url = 
+def getWeather():
+    city = getLocation()
+    url = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&APPID=537eb84d28d1b2075c6e44b37f511b10"
+    requested = urllib2.urlopen(url)
+    result = requested.read()
+    r = json.loads(result)
+    weather = r["weather"][0]["main"]
+    return weather
 
+def getWeatherSongs():
+    tag = getWeather()
+    return getSongs(tag)
+    
 def getSongs(tag):
     url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json"
     requested = urllib2.urlopen(url)
@@ -34,8 +49,9 @@ def getSongs(tag):
     r = json.loads(result)
     songlist = []
     for song in r["tracks"]["track"]:
-        print(song["name"])
+        print(song["artist"]["name"])
         songlist.append(song)
+    return render_template("results.html", songs = songlist)
 
 if (__name__ == "__main__"):
     app.debug = True
