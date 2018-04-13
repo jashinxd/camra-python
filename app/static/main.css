@@ -1,0 +1,23 @@
+body {
+  height: 100%;
+  background-image: url("background-abstract-mountains.jpg");
+}
+
+.container {
+  height: 100%;
+  padding-top: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: lightcoral;
+}
+
+h1{
+  font-size: 500%;
+}
+
+.jumbotron {
+  background: rgba(200, 54, 54, 0.15); 
+}
+

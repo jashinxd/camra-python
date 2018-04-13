@@ -1,7 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
+
 from app import app
 
 db = SQLAlchemy(app)
+print('hello u dumb stupid database' + db)
 
 class User(db.Model):
     email = db.Column(db.String(80), primary_key=True, unique=True)
