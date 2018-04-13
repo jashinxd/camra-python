@@ -39,12 +39,13 @@ def index():
         print(form)
         selection = form["category"]
         mood = form["moodoption"]
+        length = form["length"]
         if selection == "weather":
-            return getWeatherSongs()
+            return getWeatherSongs(length)
         elif selection == "location":
-            return getLocationSongs()
+            return getLocationSongs(length)
         elif selection == "mood":
-            return getSongs(mood)
+            return getSongs(mood,length)
 
 def getLocation():
     url = "http://ipinfo.io/"
@@ -52,9 +53,9 @@ def getLocation():
     city = results["city"]
     return city
             
-def getLocationSongs():
+def getLocationSongs(length):
     tag = getLocation()
-    return getSongs(tag)
+    return getSongs(tag, length)
 
 def getWeather():
     city = getLocation()
@@ -65,13 +66,13 @@ def getWeather():
     weather = r["weather"][0]["main"]
     return weather
 
-def getWeatherSongs():
+def getWeatherSongs(length):
     tag = getWeather()
-    return getSongs(tag)
+    return getSongs(tag, length)
 
 
 
-def getSongs(tag):
+def getSongs(tag,length):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
@@ -98,9 +99,17 @@ def getSongs(tag):
                 songlist.append(song)
         insertDBMaster(songlist, tag)
         conn.commit()
-    conn.close()
+    #conn.close()
+    output = []
+    counter = 0
     #lookup the entire playlist, pick however many songs they want, create a user playlist, insert it into the db, and then render
-    return render_template("results.html", songs = songlist)
+    for row in c.execute("SELECT Song.name, Song.artist, Song.url FROM Song, masterPlaylist, Playlist WHERE mp_id = p_id AND Playlist.s_id = Song.s_id AND keyword = keyword ="+'"'+tag+'"'):
+        output.append(row)
+        print(row)
+        counter += 1
+        if (counter == length):
+            break
+    return render_template("results.html", songs = output)
 
 def insertDBMaster(mPlaylist, keyword):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -109,6 +118,9 @@ def insertDBMaster(mPlaylist, keyword):
     print("should be entering this only once tbh")
     #iterate over the master playlist creating/inserting the songs
     insertSongs = []
+    insertPlaylist = []
+    insertMaster = []
+    pID = abs(hash(keyword)) % (10 ** 8))
     for song in mPlaylist:
         #create the hash for the song
         songName = song["name"]
@@ -116,16 +128,21 @@ def insertDBMaster(mPlaylist, keyword):
         songURL = song["url"]
         songID = abs(hash(songName+songArtist)) % (10 ** 8)
         songTuple = (songName, songArtist, songURL, songID)
+        playlistTuple = (pID, songID)
+        insertPlaylist.append(playlistTuple)
         insertSongs.append(songTuple)
     cursor.executemany("INSERT INTO Song VALUES (?,?,?,?)", insertSongs)
     conn.commit()
     
     for row in cursor.execute("SELECT * FROM Song"):
        print(row)
-    conn.close()
-    """create a playlist entry with all the songs in mPlaylist (some for loop)
-    then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
-    """
+    #conn.close()
+    #create a playlist entry with all the songs in mPlaylist (some for loop)
+    cursor.executemany("INSERT INTO Playlist VALUES (?,?)", insertPlaylist)
+    cursor.commit()
+    #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
+    cursor.execute("INSERT INTO masterPlaylist VALUES (" + pID + ", "+"'"+keyword+'"'+", " + mPlaylist.length() + ")"
+    cursor.commit()
 
 if (__name__ == "__main__"):
     app.debug = True
