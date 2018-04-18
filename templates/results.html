@@ -7,7 +7,7 @@
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js" integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l" crossorigin="anonymous"></script> -->
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js" integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="./styles/main.css">
+    <link rel="stylesheet" type="text/css" href="./static/main.css">
 </head>
 <body>
         <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
@@ -39,16 +39,15 @@
   </div>
 </div>
 
-{% for song in songs %}
-<div class="container">
-  <h3>{{song.name}} by {{song.artist.name}}</h3><br>
-  <audio controls="controls" id="audio_player">
-    <source src="{{song.url}}" type="audio/mpeg"/>
-    Your browser does not support the audio element.
-  </audio>
-</div>
+{% for song in songs %} 
+<div class="container"> 
+<h3>{{song.name}} by {{song.artist.name}}</h3><br> 
+<audio controls="controls" id="audio_player"> 
+<source src="{{song.url}}" type="audio/mpeg"/> 
+Your browser does not support the audio element. 
+</audio> 
+</div> 
 {% endfor %}
-
 
 <!-- Bootstrap core JavaScript -->
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
