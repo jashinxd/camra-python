@@ -2,11 +2,15 @@ from flask import Flask, render_template, request, jsonify
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
+from flask.ext.login import LoginManager
 import sys 
 
 client_credentials_manager = SpotifyClientCredentials(client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94')
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 app = Flask(__name__)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 def createPlaylist():
