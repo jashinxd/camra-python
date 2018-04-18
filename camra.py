@@ -1,13 +1,18 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
-from flask.ext.login import LoginManager
+from flask_login import LoginManager, login_user, logout_user
 import sys 
+from User import User
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
 client_credentials_manager = SpotifyClientCredentials(client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94')
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+db = SQLAlchemy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -35,6 +40,9 @@ except sqlite3.Error, e:
     print "Error %s:" % e.args[0]
     sys.exit(1)
 
+@login_manager.user_loader
+def load_user(username):
+    return User.query.filter_by(username=username).first()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -53,19 +61,38 @@ def index():
         elif selection == "mood":
             return getSongs(mood,length)
 
-@app.route('/login', methods=['POST'])
-def do_admin_login():
-    if request.form['password'] == 'password' and request.form['username'] == 'admin':
-        session['logged_in'] = True
-    else:
-        flash('wrong password!')
-    return home()
-
-@app.route("/logout")
-def logout():
-    session['logged_in'] = False
-    return home()
+@app.route('/register' , methods=['GET','POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html') 
+    user = User(request.form['username'] , request.form['password'])
+    db.session.add(user)
+    db.session.commit()
+    flash('User successfully registered')
+    return redirect(url_for('login'))
+ 
+@app.route('/login',methods=['GET','POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    username = request.form['username']
+    password = request.form['password']
     
+    registered_user = User.query.filter_by(username=username, password=password).first()
+    print(registered_user)
+    if registered_user is None:
+        flash('Username or Password is invalid' , 'error')
+        return redirect(url_for('login'))
+    else:
+        login_user(registered_user)
+        flash('Logged in successfully')
+        return redirect(request.args.get('next') or url_for('index'))
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index')) 
+
 def getLocation():
     url = "http://ipinfo.io/"
     results = requests.get(url).json()
@@ -163,6 +190,13 @@ def insertDBMaster(mPlaylist, keyword):
     cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
     conn.commit()
 
+def init_db():
+    db.init_app(app)
+    db.app = app
+    db.create_all()
+
 if (__name__ == "__main__"):
+    init_db()
+    app.secret_key = 'super secret key'
     app.debug = True
     app.run(host='localhost', port=3000)

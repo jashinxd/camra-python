@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, backref
 import os
  
 path = os.path.dirname(os.path.abspath(__file__))
-engine = create_engine('sqlite:///tutorial.db', echo=True)
+engine = create_engine('sqlite:///test.db', echo=True)
 Base = declarative_base()
  
 ########################################################################
@@ -14,8 +14,7 @@ class User(Base):
     """"""
     __tablename__ = "users"
  
-    id = Column(Integer, primary_key=True)
-    username = Column(String)
+    username = Column(String, primary_key=True)
     password = Column(String)
  
     #----------------------------------------------------------------------

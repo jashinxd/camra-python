@@ -1,34 +1,24 @@
-<link rel="stylesheet" href="/static/style.css" type="text/css">
 {% block body %}
-{% if session['logged_in'] %}
-<p>You're logged in already!</p>
-{% else %}
+  <form action="" method=post class="form-horizontal">
+    <h2>Signin to FlaskLogin(Todo) Application </h2>
+    <div class="control-group">
+        <div class="controls">
+          <input type="text" id="username" name="username" class="input-xlarge"
+            placeholder="Enter Username" required>
+        </div>
+    </div>
  
+    <div class="control-group">
+        <div class="controls">
+          <input type="password" id="password" name="password" class="input-xlarge"
+            placeholder="Enter Password" required>
+        </div>
+    </div>
  
-<form action="/login" method="POST">
-	<div class="login">
-		<div class="login-screen">
-			<div class="app-title">
-				<h1>Login</h1>
-			</div>
- 
-			<div class="login-form">
-				<div class="control-group">
-				<input type="text" class="login-field" value="" placeholder="username" name="username">
-				<label class="login-field-icon fui-user" for="login-name"></label>
-				</div>
- 
-				<div class="control-group">
-				<input type="password" class="login-field" value="" placeholder="password" name="password">
-				<label class="login-field-icon fui-lock" for="login-pass"></label>
-				</div>
- 
-                <input type="submit" value="Log in" class="btn btn-primary btn-large btn-block" >
-			    <br>
-			</div>
-		</div>
-	</div>
-</form>
- 
-{% endif %}
+    <div class="control-group">
+        <div class="controls">
+          <button type="submit" class="btn btn-success">Signin</button>
+        </div>
+    </div>
+  </form>
 {% endblock %}
