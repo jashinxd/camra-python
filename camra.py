@@ -3,9 +3,11 @@ import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
 import sys 
+
 client_credentials_manager = SpotifyClientCredentials(client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94')
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 app = Flask(__name__)
+
 
 def createPlaylist():
    # conn = sqlite3.connect('test.db',  check_same_thread=False)
@@ -47,6 +49,19 @@ def index():
         elif selection == "mood":
             return getSongs(mood,length)
 
+@app.route('/login', methods=['POST'])
+def do_admin_login():
+    if request.form['password'] == 'password' and request.form['username'] == 'admin':
+        session['logged_in'] = True
+    else:
+        flash('wrong password!')
+    return home()
+
+@app.route("/logout")
+def logout():
+    session['logged_in'] = False
+    return home()
+    
 def getLocation():
     url = "http://ipinfo.io/"
     results = requests.get(url).json()
@@ -103,7 +118,7 @@ def getSongs(tag,length):
     output = []
     counter = 0
     #lookup the entire playlist, pick however many songs they want, create a user playlist, insert it into the db, and then render
-    for row in c.execute("SELECT Song.name, Song.artist, Song.url FROM Song, masterPlaylist, Playlist WHERE mp_id = p_id AND Playlist.s_id = Song.s_id AND keyword = keyword ="+'"'+tag+'"'):
+    for row in cursor.execute("SELECT Song.name, Song.artist, Song.url FROM Song, masterPlaylist, Playlist WHERE mp_id = p_id AND Playlist.s_id = Song.s_id AND keyword = keyword ="+'"'+tag+'"'):
         output.append(row)
         print(row)
         counter += 1
