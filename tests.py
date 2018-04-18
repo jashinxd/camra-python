@@ -1,5 +1,4 @@
-from app import app
-import camra
+import camra 
 import unittest
 
 class Tests(unittest.TestCase):
@@ -12,14 +11,14 @@ class Tests(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
+        self.camra = camra.test_client()
+        self.camra.testing = True
 
     def tearDown(self):
         pass
 
     def test_home_status_code(self):
-        result = self.app.get('/')
+        result = self.camra.get('/')
         self.assertEqual(result.status_code, 200)
 
     def test_request_getLocation(self):
