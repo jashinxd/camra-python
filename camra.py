@@ -3,9 +3,8 @@ import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
 from flask_login import LoginManager, login_user, logout_user
-import sys 
+import sys, random
 from User import User
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 client_credentials_manager = SpotifyClientCredentials(client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94')
@@ -116,45 +115,63 @@ def getWeatherSongs(length):
     tag = getWeather()
     return getSongs(tag, length)
 
+def getMasterList(tag):
+    url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=100"
+    requested = urllib2.urlopen(url)
+    result = requested.read()
+    r = json.loads(result)
+    songlist = []
+    for song in r["tracks"]["track"]:
+        print(song)
+        results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+        #print(results["tracks"]["items"][0]["preview_url"])
+        if (results["tracks"]["items"] != []):
+            if (results["tracks"]["items"][0]["preview_url"] != None):
+                song["url"] = results["tracks"]["items"][0]["preview_url"]
+                songlist.append(song)
+    return songlist
 
+def getRandomSIDs(cursor, tag, length):
+    s_id_arr = []
+    cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND keyword="+'"'+tag+'"')
+    sid = cursor.fetchone()
+    while (sid != None):
+        s_id_arr.append(sid)
+        sid = cursor.fetchone()
+    if (len(s_id_arr) < int(length)):
+        return render_template("index.html", message = "You requested for too many songs. The maximum number of songs for this category is " + str(len(s_id_arr)))
+    return random.sample(s_id_arr, int(length))
+
+def createUserList(cursor, random_s_id):
+    output = []    
+    for s_id in random_s_id:
+        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        song = cursor.fetchone()[0]
+        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        artist = cursor.fetchone()[0]
+        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        url = cursor.fetchone()[0]
+        song_info = {}
+        song_info["name"] = song
+        print(song_info["name"])
+        song_info["artist"] = artist
+        song_info["url"] = url
+        song_info_json = json.loads(json.dumps(song_info))
+        print(song_info_json)
+        output.append(song_info_json)
+    return output
 
 def getSongs(tag,length):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    #term = "'" + tag + "'"
-   # print(tag)
     cursor.execute("SELECT keyword FROM masterPlaylist WHERE keyword ="+'"'+tag+'"')
-   #print("this is the checking of stuff")
-   # print(cursor.fetchone())
-
     if (cursor.fetchone() == None):
-        url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=100"
-        requested = urllib2.urlopen(url)
-        result = requested.read()
-        r = json.loads(result)
-        songlist = []
-        for song in r["tracks"]["track"]:
-            print(song["name"])
-            results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
-            #print(results["tracks"]["items"][0]["preview_url"])
-            if (results["tracks"]["items"] == []):
-                break
-            if (results["tracks"]["items"][0]["preview_url"] != None):
-                song["url"] = results["tracks"]["items"][0]["preview_url"]
-                songlist.append(song)
+        songlist = getMasterList(tag)
         insertDBMaster(songlist, tag)
         conn.commit()
-    #conn.close()
-    output = []
-    counter = 0
-    #lookup the entire playlist, pick however many songs they want, create a user playlist, insert it into the db, and then render
-    for row in cursor.execute("SELECT Song.name, Song.artist, Song.url FROM Song, masterPlaylist, Playlist WHERE mp_id = p_id AND Playlist.s_id = Song.s_id AND keyword = keyword ="+'"'+tag+'"'):
-        output.append(row)
-        print(row)
-        counter += 1
-        if (counter == length):
-            break
+    random_SIDs = getRandomSIDs(cursor, tag, length)
+    output = createUserList(cursor, random_SIDs)
     return render_template("results.html", songs = output)
 
 def insertDBMaster(mPlaylist, keyword):
@@ -173,7 +190,7 @@ def insertDBMaster(mPlaylist, keyword):
         songArtist = song["artist"]["name"]
         songURL = song["url"]
         songID = abs(hash(songName+songArtist)) % (10 ** 8)
-        songTuple = (songName, songArtist, songURL, songID)
+        songTuple = (songID, songName, songArtist, songURL)
         playlistTuple = (pID, songID)
         insertPlaylist.append(playlistTuple)
         insertSongs.append(songTuple)
@@ -200,3 +217,4 @@ if (__name__ == "__main__"):
     app.secret_key = 'super secret key'
     app.debug = True
     app.run(host='localhost', port=3000)
+
