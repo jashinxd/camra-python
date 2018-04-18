@@ -89,26 +89,43 @@ def getSongs(tag,length):
         r = json.loads(result)
         songlist = []
         for song in r["tracks"]["track"]:
-            print(song["name"])
+            print(song)
             results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
             #print(results["tracks"]["items"][0]["preview_url"])
-            if (results["tracks"]["items"] == []):
-                break
-            if (results["tracks"]["items"][0]["preview_url"] != None):
-                song["url"] = results["tracks"]["items"][0]["preview_url"]
-                songlist.append(song)
+            if (results["tracks"]["items"] != []):
+                if (results["tracks"]["items"][0]["preview_url"] != None):
+                    song["url"] = results["tracks"]["items"][0]["preview_url"]
+                    songlist.append(song)
         insertDBMaster(songlist, tag)
         conn.commit()
     #conn.close()
     output = []
+    s_id_arr = []
     counter = 0
-    #lookup the entire playlist, pick however many songs they want, create a user playlist, insert it into the db, and then render
-    for row in c.execute("SELECT Song.name, Song.artist, Song.url FROM Song, masterPlaylist, Playlist WHERE mp_id = p_id AND Playlist.s_id = Song.s_id AND keyword = keyword ="+'"'+tag+'"'):
-        output.append(row)
-        print(row)
-        counter += 1
-        if (counter == length):
-            break
+    cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND keyword="+'"'+tag+'"')
+    #for s_id in cursor.fet):
+    sid = cursor.fetchone()
+    while (sid != None):
+        s_id_arr.append(sid)
+        sid = cursor.fetchone()
+    #print(cursor.fetchone()[0])
+    #print(cursor.fetchone()[0])
+    #print(cursor.fetchone()[0])
+    for s_id in s_id_arr:
+        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        song = cursor.fetchone()[0]
+        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        artist = cursor.fetchone()[0]
+        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        url = cursor.fetchone()[0]
+        song_info = {}
+        song_info["name"] = song
+        print(song_info["name"])
+        song_info["artist"] = artist
+        song_info["url"] = url
+        song_info_json = json.loads(json.dumps(song_info))
+        print(song_info_json)
+        output.append(song_info_json)
     return render_template("results.html", songs = output)
 
 def insertDBMaster(mPlaylist, keyword):
@@ -127,7 +144,7 @@ def insertDBMaster(mPlaylist, keyword):
         songArtist = song["artist"]["name"]
         songURL = song["url"]
         songID = abs(hash(songName+songArtist)) % (10 ** 8)
-        songTuple = (songName, songArtist, songURL, songID)
+        songTuple = (songID, songName, songArtist, songURL)
         playlistTuple = (pID, songID)
         insertPlaylist.append(playlistTuple)
         insertSongs.append(songTuple)

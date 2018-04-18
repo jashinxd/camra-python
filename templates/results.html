@@ -41,7 +41,7 @@
 
 {% for song in songs %} 
 <div class="container"> 
-<h3>{{song.name}} by {{song.artist.name}}</h3><br> 
+<h3>{{song.name}} by {{song.artist}}</h3><br> 
 <audio controls="controls" id="audio_player"> 
 <source src="{{song.url}}" type="audio/mpeg"/> 
 Your browser does not support the audio element. 
