@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -60,6 +60,48 @@ def index():
         elif selection == "mood":
             return getSongs(mood,length)
 
+@app.route("/results", methods=["GET", "POST"])
+def results():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        return render_template('results.html', songs=session["output"])
+
+@app.route("/save", methods=["GET", "POST"])
+def save():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        #Code to create a new user database
+        #returns userpage, but for now returns results
+        #return redirect(url_for('userpage'))
+        return render_template('results.html', songs=session["output"])
+
+@app.route("/modify", methods=["GET", "POST"])
+def modify():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        return render_template('modify.html', songs=session["output"])
+
+@app.route("/submitmodify", methods=["GET", "POST"])
+def submitmodify():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        #Code to create a new user database
+        #returns userpage, but for now returns results
+        #return redirect(url_for('userpage')
+        newoutput = []
+        form = request.form
+        newlist = form.getlist("songnames")
+        print(newlist)
+        for song in session["output"]:
+            if song["name"] in newlist:
+                newoutput.append(song)
+        session["newoutput"] = newoutput
+        return render_template('results.html', songs=newoutput)
+        
 @app.route('/register' , methods=['GET','POST'])
 def register():
     if request.method == 'GET':
@@ -142,6 +184,9 @@ def getRandomSIDs(cursor, tag, length):
         return render_template("index.html", message = "You requested for too many songs. The maximum number of songs for this category is " + str(len(s_id_arr)))
     return random.sample(s_id_arr, int(length))
 
+# Inserts the song into the playlist database
+# def insertUserPlaylist(name, artist, url):
+
 def createUserList(cursor, random_s_id):
     output = []    
     for s_id in random_s_id:
@@ -153,13 +198,14 @@ def createUserList(cursor, random_s_id):
         url = cursor.fetchone()[0]
         song_info = {}
         song_info["name"] = song
-        print(song_info["name"])
+        #print(song_info["name"])
         song_info["artist"] = artist
         song_info["url"] = url
         song_info_json = json.loads(json.dumps(song_info))
-        print(song_info_json)
+        #print(song_info_json)
         output.append(song_info_json)
     return output
+
 
 def getSongs(tag,length):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -172,7 +218,9 @@ def getSongs(tag,length):
         conn.commit()
     random_SIDs = getRandomSIDs(cursor, tag, length)
     output = createUserList(cursor, random_SIDs)
-    return render_template("results.html", songs = output)
+    session['output'] = output
+    return redirect(url_for("results"), code = 307)
+    #return render_template("results.html", songs = output)
 
 def insertDBMaster(mPlaylist, keyword):
     path = os.path.dirname(os.path.abspath(__file__))

@@ -39,25 +39,20 @@
   </div>
 </div>
 
-{% for song in songs %} 
-<div class="container"> 
-  <h3>{{song.name}} by {{song.artist}}</h3><br> 
-  <audio controls="controls" id="audio_player"> 
-    <source src="{{song.url}}" type="audio/mpeg"/> 
-    Your browser does not support the audio element. 
-  </audio> 
-</div> 
-{% endfor %}
-{% if current_user.is_authenticated %}
-<div class="container">
-  <form method="post" action="/save">
-    <button type="submit" class="btn btn-primary">Save Playlist</button>
-  </form>
-  <form method="post" action="/modify">
-    <button type="submit" class="btn btn-primary">Modify Playlist</button>
-  </form>
-</div>
-{% endif %}
+<form method="post" action="/submitmodify">
+  {% for song in songs %} 
+  <input type="checkbox" name="songnames" value="{{song.name}}" checked>
+  <div class="container">
+    <h3>{{song.name}} by {{song.artist}}</h3> 
+    <audio controls="controls" id="audio_player"> 
+      <source src="{{song.url}}" type="audio/mpeg"/> 
+      Your browser does not support the audio element. 
+    </audio> 
+  </div>
+  <br>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary">Submit Changes</button>
+</form>
 
 <!-- Bootstrap core JavaScript -->
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
