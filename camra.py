@@ -99,8 +99,8 @@ def submitmodify():
         for song in session["output"]:
             if song["name"] in newlist:
                 newoutput.append(song)
-        session["newoutput"] = newoutput
-        return render_template('results.html', songs=newoutput)
+        session["output"] = newoutput
+        return redirect(url_for("results"), code = 307)
         
 @app.route('/register' , methods=['GET','POST'])
 def register():
@@ -118,7 +118,8 @@ def login():
         return render_template('login.html')
     username = request.form['username']
     password = request.form['password']
-    
+    print(username)
+    print(password)
     registered_user = User.query.filter_by(username=username, password=password).first()
     print(registered_user)
     if registered_user is None:
@@ -127,11 +128,13 @@ def login():
     else:
         login_user(registered_user)
         flash('Logged in successfully')
+        #session["user"] = registered_user
         return redirect(request.args.get('next') or url_for('index'))
 
 @app.route('/logout')
 def logout():
     logout_user()
+    session["user"] = None
     return redirect(url_for('index')) 
 
 def getLocation():

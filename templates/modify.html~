@@ -1,0 +1,67 @@
+<!-- views/index.ejs -->
+<!doctype html>
+<html lang="en">
+<head>
+    <title>CAMRA</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js" integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l" crossorigin="anonymous"></script> -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js" integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="./static/main.css">
+</head>
+<body>
+        <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+                <a class="navbar-brand" href="#"><span class="fas fa-camera-retro"></span> CAMRA </span></a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+              
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                  </ul>
+                <ul class="navbar-nav navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login"><span class="fa fa-user"></span>Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register"><span class="fa fa-user"></span>Sign Up</a>
+                    </li>
+                </ul>
+                </div>
+              </nav>
+
+<div class="container">
+  <div>
+    <h1><span class="fas fa-camera-retro"></span> CAMRA </h1>
+  </div>
+</div>
+
+{% for song in songs %} 
+<div class="container"> 
+  <h3>{{song.name}} by {{song.artist}}</h3><br> 
+  <audio controls="controls" id="audio_player"> 
+    <source src="{{song.url}}" type="audio/mpeg"/> 
+    Your browser does not support the audio element. 
+  </audio> 
+</div> 
+{% endfor %}
+{% if current_user.is_authenticated %}
+<div class="container">
+  <form method="post" action="/save">
+    <button type="submit" class="btn btn-primary">Save Playlist</button>
+  </form>
+  <form method="post" action="/modify">
+    <button type="submit" class="btn btn-primary">Modify Playlist</button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Bootstrap core JavaScript -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>
