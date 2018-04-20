@@ -6,7 +6,10 @@ from flask_login import LoginManager, login_user, logout_user
 import sys, random
 from User import User
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import *
 
+engine = create_engine('sqlite:///:memory:')
+metadata = MetaData()
 client_credentials_manager = SpotifyClientCredentials(client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94')
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 app = Flask(__name__)
@@ -20,10 +23,18 @@ login_manager.init_app(app)
 def createPlaylist():
    # conn = sqlite3.connect('test.db',  check_same_thread=False)
    # cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer, name text, artist text, url text)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer PRIMARY KEY, name text, artist text, url text)''')
+    """song = Table('song', metadata, 
+        Column('s_id', Integer, primary_key = True),
+        Column('artist', String(25)),
+        Column('url', String(200)))"""
     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer, playlist, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
+    """playlist = Table('playlist', metadata, 
+        Column('p_id', Integer),
+        Column('s_id', Integer, ),
+        Column('url', String(200))) """
+    cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
     conn.commit()
     #conn.close()
 
@@ -33,6 +44,7 @@ try:
     cursor = conn.cursor()
     cursor.execute('SELECT SQLITE_VERSION() ')
     data = cursor.fetchone()
+    print("DO IT")
     createPlaylist()
     print "SQLite version: %s" % data 
 except sqlite3.Error, e:
@@ -49,7 +61,7 @@ def index():
         return render_template("index.html")
     elif request.method == "POST":
         form = request.form
-        print(form)
+        #print(form)
         selection = form["category"]
         mood = form["moodoption"]
         length = form["length"]
@@ -151,6 +163,7 @@ def getWeather():
     result = requested.read()
     r = json.loads(result)
     weather = r["weather"][0]["main"]
+    print("weather" + weather)
     return weather
 
 def getWeatherSongs(length):
@@ -158,19 +171,52 @@ def getWeatherSongs(length):
     return getSongs(tag, length)
 
 def getMasterList(tag):
-    url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=100"
+    print("IN THE MASTER")
+   
+    songlist = []
+    print ("thar she blows")
+    results = sp.search(q = tag, limit = 4, type = 'playlist')
+    print("results " + str(results))
+    for playlist in results["playlists"]["items"]:
+        playlistid = playlist["id"]
+        playlistuser = playlist["owner"]["id"]
+        print(playlistuser)
+        psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
+        
+        for tInfo in psongs["items"]:
+            song = {}
+            song["name"] = tInfo["track"]["name"]
+            song["artist"] = tInfo["track"]["artists"][0]["name"]
+            song["url"] = tInfo["track"]["preview_url"]
+            if (song["url"] != None):
+                print("song: " + tInfo["track"]["name"])
+                print("artist: " + tInfo["track"]["artists"][0]["name"])
+                print("url:" + tInfo["track"]["preview_url"])
+                songlist.append(song)
+    
+    print("in between songs")
+    url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=200"
     requested = urllib2.urlopen(url)
     result = requested.read()
     r = json.loads(result)
-    songlist = []
+  # print("this is result " + result)
     for song in r["tracks"]["track"]:
-        print(song)
+       # print("first one in ")
         results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+        #print("now here")
         #print(results["tracks"]["items"][0]["preview_url"])
         if (results["tracks"]["items"] != []):
             if (results["tracks"]["items"][0]["preview_url"] != None):
-                song["url"] = results["tracks"]["items"][0]["preview_url"]
-                songlist.append(song)
+                Nsong = {}
+                Nsong["name"] = song["name"]
+                Nsong["artist"] = song["artist"]["name"]
+                Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
+                songlist.append(Nsong)
+      #  print("iteration done")
+    
+   # for playlist in results:
+
+    print("we about to return")
     return songlist
 
 def getRandomSIDs(cursor, tag, length):
@@ -235,14 +281,15 @@ def insertDBMaster(mPlaylist, keyword):
     for song in mPlaylist:
         #create the hash for the song
         songName = song["name"]
-        songArtist = song["artist"]["name"]
+        songArtist = song["artist"]
         songURL = song["url"]
         songID = abs(hash(songName+songArtist)) % (10 ** 8)
         songTuple = (songID, songName, songArtist, songURL)
         playlistTuple = (pID, songID)
         insertPlaylist.append(playlistTuple)
         insertSongs.append(songTuple)
-    cursor.executemany("INSERT INTO Song VALUES (?,?,?,?)", insertSongs)
+    #print("this is insertSongs" + str(insertSongs))
+    cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
     conn.commit()
     
     for row in cursor.execute("SELECT * FROM Song"):
