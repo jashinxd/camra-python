@@ -127,11 +127,15 @@ def save():
 def profile():
     if request.method == 'GET':
         if (current_user.is_authenticated):
-            return render_template('profile.html')
+            #playlists = getUserPlaylists()
+            userPlaylists = getUserPlaylists()
+            return render_template('profile.html', userPlaylists=userPlaylists)
         else:
             return redirect(url_for('index'))
     else:
-        return render_template('profile.html')
+        userPlaylists = getUserPlaylists()
+        print(userPlaylists)
+        return render_template('profile.html', userPlaylists=userPlaylists)
  
 @app.route('/register' , methods=['GET','POST'])
 def register():
@@ -254,6 +258,8 @@ def getRandomSIDs(cursor, tag, length):
         sid = cursor.fetchone()
     if (len(s_id_arr) < int(length)):
         return render_template("index.html", message = "You requested for too many songs. The maximum number of songs for this category is " + str(len(s_id_arr)))
+    print(int(length))
+    print random.sample(s_id_arr, int(length))
     return random.sample(s_id_arr, int(length))
 
 # Inserts the song into the playlist database
@@ -281,7 +287,21 @@ def insertUserPlaylist():
         conn.commit()
         session["output"] = []
     return redirect(url_for('profile'), code = 307) 
-        
+
+def getUserPlaylists():
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    username = current_user.username
+    p_id_arr = []
+    cursor.execute("SELECT p_id FROM Users WHERE username="'"'+username+'"')
+    p_id = cursor.fetchone()
+    while (p_id != None):
+        p_id_arr.append(p_id)
+        p_id = cursor.fetchone()
+    return p_id_arr
+    
+
 def createUserList(cursor, random_s_id):
     output = []    
     for s_id in random_s_id:
@@ -315,7 +335,7 @@ def getSongs(tag,length):
     if type(random_SIDs) != list:
         return random_SIDs
     output = createUserList(cursor, random_SIDs)            
-    session['output'] = output
+    session["output"] = output
     return redirect(url_for("results"), code = 307)
     #return render_template("results.html", songs = output)
 
