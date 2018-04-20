@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from spotipy.oauth2 import SpotifyClientCredentials
-from flask_login import LoginManager, login_user, logout_user
+from flask_login import LoginManager, login_user, logout_user, current_user
 import sys, random
 from User import User
 from flask_sqlalchemy import SQLAlchemy
@@ -19,7 +19,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
 def createPlaylist():
    # conn = sqlite3.connect('test.db',  check_same_thread=False)
    # cursor = conn.cursor()
@@ -34,7 +33,7 @@ def createPlaylist():
         Column('s_id', Integer, ),
         Column('url', String(200))) """
     cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist integer, p_id integer, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
     conn.commit()
     #conn.close()
 
@@ -65,6 +64,7 @@ def index():
         selection = form["category"]
         mood = form["moodoption"]
         length = form["length"]
+        print(length)
         if selection == "weather":
             return getWeatherSongs(length)
         elif selection == "location":
@@ -79,6 +79,7 @@ def results():
     else:
         return render_template('results.html', songs=session["output"])
 
+"""
 @app.route("/save", methods=["GET", "POST"])
 def save():
     if request.method == "GET":
@@ -88,6 +89,7 @@ def save():
         #returns userpage, but for now returns results
         #return redirect(url_for('userpage'))
         return render_template('results.html', songs=session["output"])
+"""
 
 @app.route("/modify", methods=["GET", "POST"])
 def modify():
@@ -113,12 +115,29 @@ def submitmodify():
                 newoutput.append(song)
         session["output"] = newoutput
         return redirect(url_for("results"), code = 307)
-        
+
+@app.route("/save", methods=["GET", "POST"])
+def save():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        return insertUserPlaylist()
+
+@app.route('/profile', methods=['GET','POST'])
+def profile():
+    if request.method == 'GET':
+        if (current_user.is_authenticated):
+            return render_template('profile.html')
+        else:
+            return redirect(url_for('index'))
+    else:
+        return render_template('profile.html')
+ 
 @app.route('/register' , methods=['GET','POST'])
 def register():
     if request.method == 'GET':
         return render_template('register.html') 
-    user = User(request.form['username'] , request.form['password'])
+    user = User(request.form['username'] , request.form['password'], 0)
     db.session.add(user)
     db.session.commit()
     flash('User successfully registered')
@@ -234,8 +253,31 @@ def getRandomSIDs(cursor, tag, length):
     return random.sample(s_id_arr, int(length))
 
 # Inserts the song into the playlist database
-# def insertUserPlaylist(name, artist, url):
-
+def insertUserPlaylist():
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    if current_user.is_authenticated:
+        username = current_user.username
+        cursor.execute("SELECT p_id FROM users WHERE username = "+'"'+username+'"')
+        numPlaylists = len(cursor.fetchall())
+        keyword = username + str(numPlaylists) 
+        pID = abs(hash(keyword)) % (10 ** 8)
+        user = User(username, "0", pID)
+        db.session.add(user)
+        db.session.commit()
+        insertPlaylist = []
+        for song in session["output"]:
+            songName = song["name"]
+            songArtist = song["artist"]
+            songID = abs(hash(songName+songArtist)) % (10 ** 8)
+            playlistTuple = (pID, songID)
+            insertPlaylist.append(playlistTuple)
+        cursor.executemany("INSERT INTO Playlist VALUES (?,?)", insertPlaylist)
+        conn.commit()
+        session["output"] = []
+    return redirect(url_for('profile'), code = 307) 
+        
 def createUserList(cursor, random_s_id):
     output = []    
     for s_id in random_s_id:
@@ -266,7 +308,9 @@ def getSongs(tag,length):
         insertDBMaster(songlist, tag)
         conn.commit()
     random_SIDs = getRandomSIDs(cursor, tag, length)
-    output = createUserList(cursor, random_SIDs)
+    if type(random_SIDs) != list:
+        return random_SIDs
+    output = createUserList(cursor, random_SIDs)            
     session['output'] = output
     return redirect(url_for("results"), code = 307)
     #return render_template("results.html", songs = output)
