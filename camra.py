@@ -177,27 +177,31 @@ def getMasterList(tag):
     print("IN THE MASTER")
    
     songlist = []
+    songCounter = 0
+    sOffset = 0
     print ("thar she blows")
-    results = sp.search(q = tag, limit = 4, type = 'playlist')
-    print("results " + str(results))
-    for playlist in results["playlists"]["items"]:
-        playlistid = playlist["id"]
-        playlistuser = playlist["owner"]["id"]
-        print(playlistuser)
-        psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
-        
-        for tInfo in psongs["items"]:
-            song = {}
-            song["name"] = tInfo["track"]["name"]
-            song["artist"] = tInfo["track"]["artists"][0]["name"]
-            song["url"] = tInfo["track"]["preview_url"]
-            if (song["url"] != None):
-                print("song: " + tInfo["track"]["name"])
-                print("artist: " + tInfo["track"]["artists"][0]["name"])
-                print("url:" + tInfo["track"]["preview_url"])
-                songlist.append(song)
     
-    print("in between songs")
+    while (songCounter < 200):
+        results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
+
+        for playlist in results["playlists"]["items"]:
+            playlistid = playlist["id"]
+            playlistuser = playlist["owner"]["id"]
+            sOffset += 2
+            psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
+       
+            for tInfo in psongs["items"]:
+                song = {}
+                song["name"] = tInfo["track"]["name"]
+                song["artist"] = tInfo["track"]["artists"][0]["name"]
+                song["url"] = tInfo["track"]["preview_url"]
+                songCounter += 1
+                if (song["url"] != None):
+                    print("song: " + tInfo["track"]["name"])
+                    print("artist: " + tInfo["track"]["artists"][0]["name"])
+                    print("url:" + tInfo["track"]["preview_url"])
+                    songlist.append(song)
+        
     url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=200"
     requested = urllib2.urlopen(url)
     result = requested.read()
