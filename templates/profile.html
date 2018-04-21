@@ -20,7 +20,7 @@
                     <div class="panel-body">
                         <div class="media">
                             <div align="center">
-                                <img class="thumbnail img-responsive" src="https://lut.im/7JCpw12uUT/mY0Mb78SvSIcjvkf.png" width="200px" height="200px">
+                                <img class="thumbnail img-responsive" src="http://i.imgur.com/6YToyEF.png" width="200px" height="200px">
                             </div>
                             <div class="media-body">
                         <!-- INSERT CURRENT WEATHER CONTENT HERE -->
@@ -45,12 +45,17 @@
                     <div class="panel-body">
                         <div class="pull-left">
                             <a href="#">
-                                <img class="media-object img-circle" src="https://lut.im/7JCpw12uUT/mY0Mb78SvSIcjvkf.png" width="50px" height="50px" style="margin-right:8px; margin-top:-5px;">
+                                <img class="media-object img-circle" src="http://i.imgur.com/6YToyEF.png" width="50px" height="50px" style="margin-right:8px; margin-top:-5px;">
                             </a>
                         </div>
                         <div class="post-content">
                             <p style="font-weight: bold;">{{info['keyword']}}</p>
-                            <p>Number of Songs: {{info['length']}} pid: {{info['p_id']}}</p>
+                            <p>Number of Songs: {{info['length']}} pid: {{info['p_id']}}
+                                <form method="post" action="/viewplaylist">
+                                    <input type="hidden" name="p_id" value="{{info['p_id']}}">
+                                    <button type="submit" class="btn btn-primary">View</button>
+                                </form>
+                            </p>
                         </div>
                     </div>
                 </div>

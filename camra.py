@@ -79,6 +79,15 @@ def results():
     else:
         return render_template('results.html', songs=session["output"])
 
+@app.route("/viewplaylist", methods=["GET", "POST"])
+def viewplaylist():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        form = request.form
+        p_id = form["p_id"]
+        output = viewPlaylist(p_id)
+        return render_template('view.html', songs=output)
 """
 @app.route("/save", methods=["GET", "POST"])
 def save():
@@ -249,6 +258,35 @@ def getMasterList(tag):
     print("we about to return")
     return songlist
 
+def viewPlaylist(p_id):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    songList = []
+    s_id_arr = []
+    cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+p_id)
+    sid = cursor.fetchone()
+    while (sid != None):
+        s_id_arr.append(sid)
+        sid = cursor.fetchone()
+    output = []
+    for s_id in s_id_arr:
+        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        song = cursor.fetchone()[0]
+        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        artist = cursor.fetchone()[0]
+        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        url = cursor.fetchone()[0]
+        song_info = {}
+        song_info["name"] = song
+        #print(song_info["name"])
+        song_info["artist"] = artist
+        song_info["url"] = url
+        song_info_json = json.loads(json.dumps(song_info))
+        #print(song_info_json)
+        output.append(song_info_json)
+    return output
+    
 def getRandomSIDs(cursor, tag, length):
     s_id_arr = []
     cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+tag+'"')
