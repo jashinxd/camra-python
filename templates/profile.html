@@ -33,19 +33,24 @@
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <span>
-                            <h1 class="panel-title pull-left" style="font-size:30px;">{{current_user.username}}'s Playlists</h1>
+                            <h1 class="panel-title pull-left" style="font-size:30px;">{{current_user.username}}</h1>
                         </span>
-                        <br><br>
                     </div>
                 </div>
                 <hr>
 
-                {% for pid in userPlaylists %}
+                {% for info in userPlaylists %}
                 <!-- Simple post content example. -->
                 <div class="panel panel-default">
                     <div class="panel-body">
+                        <div class="pull-left">
+                            <a href="#">
+                                <img class="media-object img-circle" src="https://lut.im/7JCpw12uUT/mY0Mb78SvSIcjvkf.png" width="50px" height="50px" style="margin-right:8px; margin-top:-5px;">
+                            </a>
+                        </div>
                         <div class="post-content">
-                            <p>{{pid}}</p>
+                            <p style="font-weight: bold;">{{info['keyword']}}</p>
+                            <p>Number of Songs: {{info['length']}} pid: {{info['p_id']}}</p>
                         </div>
                     </div>
                 </div>

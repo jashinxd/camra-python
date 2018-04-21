@@ -27,7 +27,7 @@ def createPlaylist():
         Column('s_id', Integer, primary_key = True),
         Column('artist', String(25)),
         Column('url', String(200)))"""
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, keyword text, FOREIGN KEY(keyword) REFERENCES masterPlaylist(keyword), FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
     """playlist = Table('playlist', metadata, 
         Column('p_id', Integer),
         Column('s_id', Integer, ),
@@ -251,7 +251,7 @@ def getMasterList(tag):
 
 def getRandomSIDs(cursor, tag, length):
     s_id_arr = []
-    cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND keyword="+'"'+tag+'"')
+    cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+tag+'"')
     sid = cursor.fetchone()
     while (sid != None):
         s_id_arr.append(sid)
@@ -281,11 +281,12 @@ def insertUserPlaylist():
             songName = song["name"]
             songArtist = song["artist"]
             songID = abs(hash(songName+songArtist)) % (10 ** 8)
-            playlistTuple = (pID, songID)
+            playlistTuple = (pID, songID, session["keyword"])
             insertPlaylist.append(playlistTuple)
-        cursor.executemany("INSERT INTO Playlist VALUES (?,?)", insertPlaylist)
+        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
         conn.commit()
         session["output"] = []
+        session["keyword"] = None
     return redirect(url_for('profile'), code = 307) 
 
 def getUserPlaylists():
@@ -293,13 +294,33 @@ def getUserPlaylists():
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     username = current_user.username
+    dictList = []
     p_id_arr = []
-    cursor.execute("SELECT p_id FROM Users WHERE username="'"'+username+'"')
+    keywordList = []
+    lengthList = []
+    cursor.execute("SELECT p_id FROM Users WHERE username="+'"'+username+'"')
     p_id = cursor.fetchone()
     while (p_id != None):
-        p_id_arr.append(p_id)
+        if p_id[0] != 0:
+            p_id_arr.append(p_id)
         p_id = cursor.fetchone()
-    return p_id_arr
+    for pid in p_id_arr:
+        cursor.execute("SELECT keyword FROM Playlist WHERE p_id ="+str(pid[0]))
+        keyword = cursor.fetchone()
+        if keyword == None:
+            keywordList.append(keyword)
+        else:
+            keywordList.append(keyword[0].encode("ascii"))
+    print(keywordList)
+    for pid in p_id_arr:
+        cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+str(pid[0]))
+        plLength = len(cursor.fetchall())
+        lengthList.append(plLength)
+    print(lengthList)
+    for index, pid in enumerate(p_id_arr):
+        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index]})
+    print(dictList)
+    return dictList
     
 
 def createUserList(cursor, random_s_id):
@@ -336,6 +357,7 @@ def getSongs(tag,length):
         return random_SIDs
     output = createUserList(cursor, random_SIDs)            
     session["output"] = output
+    session["keyword"] = tag
     return redirect(url_for("results"), code = 307)
     #return render_template("results.html", songs = output)
 
@@ -356,7 +378,7 @@ def insertDBMaster(mPlaylist, keyword):
         songURL = song["url"]
         songID = abs(hash(songName+songArtist)) % (10 ** 8)
         songTuple = (songID, songName, songArtist, songURL)
-        playlistTuple = (pID, songID)
+        playlistTuple = (pID, songID, keyword)
         insertPlaylist.append(playlistTuple)
         insertSongs.append(songTuple)
     #print("this is insertSongs" + str(insertSongs))
@@ -367,7 +389,7 @@ def insertDBMaster(mPlaylist, keyword):
        print(row)
     #conn.close()
     #create a playlist entry with all the songs in mPlaylist (some for loop)
-    cursor.executemany("INSERT INTO Playlist VALUES (?,?)", insertPlaylist)
+    cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
     conn.commit()
     #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
     cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
