@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
-from spotipy.oauth2 import SpotifyClientCredentials
-import spotify.util as util
 from flask_login import LoginManager, login_user, logout_user, current_user
 import sys, random
 from User import User
@@ -88,7 +86,19 @@ def viewplaylist():
         form = request.form
         p_id = form["p_id"]
         output = viewPlaylist(p_id)
-        return render_template('view.html', songs=output)
+        return render_template('view.html', songs=output, p_id=p_id)
+
+@app.route("/export", methods=["GET", "POST"])
+def export():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        form = request.form
+        p_id = form["p_id"]
+        name = form["pName"]
+        exportName(pid, name)
+        
+
 """
 @app.route("/save", methods=["GET", "POST"])
 def save():
