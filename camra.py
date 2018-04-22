@@ -458,20 +458,20 @@ def exportSpotify(pID, keyword):
     cursor = conn.cursor()
     trackIDs = []
     for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-         results = sp.search(q='track:' + row[1] + ' artist:' + row[2], type='track', limit=1)
+         results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
          trackId = results["id"]
          trackIDs.append(trackIDs)
 
     scope = 'playlist-modify-private'
     if len(sys.argv) > 1:
-        username = sys.argv[1]
+        username = qsys.argv[1]
     else:
         print "Usage: %s username" % (sys.argv[0],)
         sys.exit()
     token = util.prompt_for_user_token(username, scope)
     if token:
         uSpot = spotipy.Spotify(auth=token)
-        playlist = uSpot.user_playist_create(username, keyword, public = False, description = "imported from CAMRA")
+        playlist = uSpot.user_playlist_create(username, keyword, public = False, description = "imported from CAMRA")
         result = uSpot.user_playlist_add_tracks(username, playlist, trackIDs)
         print(result)
 
