@@ -10,6 +10,12 @@
     <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
   </head>
 
+  <style>
+    form {
+        display: inline-block;
+    }
+  </style>
+  
   <body>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -50,12 +56,18 @@
                         </div>
                         <div class="post-content">
                             <p style="font-weight: bold;">{{info['keyword']}}</p>
-                            <p>Number of Songs: {{info['length']}} pid: {{info['p_id']}}
-                                <form method="post" action="/viewplaylist">
+			     Number of Songs: {{info['length']}} pid: {{info['p_id']}}
+			    <p>
+			    <form method="post" action="/viewplaylist">
                                     <input type="hidden" name="p_id" value="{{info['p_id']}}">
                                     <button type="submit" class="btn btn-primary">View</button>
+				    
                                 </form>
-                            </p>
+				<form method="post" action="/deleteplaylist">
+                                    <input type="hidden" name="p_id" value="{{info['p_id']}}">
+                                    <button type="submit" class="btn btn-primary">Delete</button>
+                                </form>
+			    </p>
                         </div>
                     </div>
                 </div>

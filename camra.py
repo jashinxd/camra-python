@@ -145,8 +145,17 @@ def profile():
         userPlaylists = getUserPlaylists()
         print(userPlaylists)
         return render_template('profile.html', userPlaylists=userPlaylists)
- 
-@app.route('/register' , methods=['GET','POST'])
+
+@app.route('/deleteplaylist', methods=['GET','POST'])
+def deleteplaylist():
+    if request.method == 'GET':
+        return render_template('index.html')
+    if request.method == 'POST':
+        p_id = request.form['p_id']
+        deletePlaylist(p_id)
+        return redirect(url_for('profile'))
+
+@app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'GET':
         return render_template('register.html') 
@@ -286,7 +295,16 @@ def viewPlaylist(p_id):
         #print(song_info_json)
         output.append(song_info_json)
     return output
-    
+
+def deletePlaylist(p_id):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    if current_user.is_authenticated:
+        cursor.execute("DELETE FROM Playlist WHERE p_id ="+p_id)
+        cursor.execute("DELETE FROM users WHERE p_id = "+p_id)
+        conn.commit()
+
 def getRandomSIDs(cursor, tag, length):
     s_id_arr = []
     cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+tag+'"')
