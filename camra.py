@@ -87,7 +87,18 @@ def viewplaylist():
         form = request.form
         p_id = form["p_id"]
         output = viewPlaylist(p_id)
-        return render_template('view.html', songs=output)
+        return render_template('view.html', songs=output, p_id=p_id)
+
+@app.route("/export", methods=["GET", "POST"])
+def export():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    else:
+        form = request.form
+        p_id = form["p_id"]
+        name = form["pName"]
+        exportName(pid, name)
+        
 """
 @app.route("/save", methods=["GET", "POST"])
 def save():
