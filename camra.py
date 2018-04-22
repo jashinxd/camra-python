@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
-from spotipy.oauth2 import SpotifyClientCredentials
 from flask_login import LoginManager, login_user, logout_user, current_user
 import sys, random
 from User import User
@@ -99,6 +98,7 @@ def export():
         name = form["pName"]
         exportName(pid, name)
         
+
 """
 @app.route("/save", methods=["GET", "POST"])
 def save():
@@ -461,6 +461,29 @@ def insertDBMaster(mPlaylist, keyword):
     #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
     cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
     conn.commit()
+
+def exportSpotify(pID, keyword):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    trackIDs = []
+    for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
+         results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
+         trackId = results["id"]
+         trackIDs.append(trackIDs)
+
+    scope = 'playlist-modify-private'
+    if len(sys.argv) > 1:
+        username = qsys.argv[1]
+    else:
+        print "Usage: %s username" % (sys.argv[0],)
+        sys.exit()
+    token = util.prompt_for_user_token(username, scope)
+    if token:
+        uSpot = spotipy.Spotify(auth=token)
+        playlist = uSpot.user_playlist_create(username, keyword, public = False, description = "imported from CAMRA")
+        result = uSpot.user_playlist_add_tracks(username, playlist, trackIDs)
+        print(result)
 
 def init_db():
     db.init_app(app)
