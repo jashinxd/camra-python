@@ -14,14 +14,16 @@ class User(Base):
     """"""
     __tablename__ = "users"
  
-    username = Column(String, primary_key=True)
+    username = Column(String)
     password = Column(String)
+    p_id = Column(Integer, primary_key=True)
  
     #----------------------------------------------------------------------
-    def __init__(self, username, password):
+    def __init__(self, username, password, p_id):
         """"""
         self.username = username
         self.password = password
+        self.p_id = p_id
  
 # create tables
 Base.metadata.create_all(engine)
