@@ -169,8 +169,11 @@ def deleteplaylist():
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'GET':
-        return render_template('register.html') 
-    user = User(request.form['username'] , request.form['password'], 0)
+        return render_template('register.html')
+    form = request.form
+    username = form['username']
+    password = form['password']
+    user = User(username, password, 0)
     db.session.add(user)
     db.session.commit()
     flash('User successfully registered')

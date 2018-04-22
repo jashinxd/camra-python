@@ -14,7 +14,7 @@ class User(Base):
     """"""
     __tablename__ = "users"
  
-    username = Column(String)
+    username = Column(String, primary_key=True)
     password = Column(String)
     p_id = Column(Integer, primary_key=True)
  
