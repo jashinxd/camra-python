@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 import urllib2, json, requests, spotipy, sqlite3, os
 from sqlite3 import Error
 from flask_login import LoginManager, login_user, logout_user, current_user
+from spotipy.oauth2 import SpotifyClientCredentials
+import spotipy.util as util
 import sys, random
 from User import User
 from flask_sqlalchemy import SQLAlchemy
@@ -96,7 +98,8 @@ def export():
         form = request.form
         p_id = form["p_id"]
         name = form["pName"]
-        exportName(pid, name)
+        username = form["sUsername"]
+        exportSpotify(p_id, name, username)
         
 
 """
@@ -465,27 +468,24 @@ def insertDBMaster(mPlaylist, keyword):
     cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
     conn.commit()
 
-def exportSpotify(pID, keyword):
+def exportSpotify(pID, keyword, username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    trackIDs = []
+    trackURIs = []
     for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-         results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
-         trackId = results["id"]
-         trackIDs.append(trackIDs)
+        print(row[0])
+        results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
+        trackURI = results["tracks"]["items"][0]["uri"]
+        trackURIs.append(trackURI)
 
     scope = 'playlist-modify-private'
-    if len(sys.argv) > 1:
-        username = qsys.argv[1]
-    else:
-        print "Usage: %s username" % (sys.argv[0],)
-        sys.exit()
-    token = util.prompt_for_user_token(username, scope)
+    
+    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'google.com')
     if token:
         uSpot = spotipy.Spotify(auth=token)
         playlist = uSpot.user_playlist_create(username, keyword, public = False, description = "imported from CAMRA")
-        result = uSpot.user_playlist_add_tracks(username, playlist, trackIDs)
+        result = uSpot.user_playlist_add_tracks(username, playlist, trackURIs)
         print(result)
 
 def init_db():
