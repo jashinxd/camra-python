@@ -416,7 +416,6 @@ def createUserList(cursor, random_s_id):
         output.append(song_info_json)
     return output
 
-
 def getSongs(tag,length):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
@@ -447,7 +446,7 @@ def insertDBMaster(mPlaylist, keyword):
     pID = abs(hash(keyword)) % (10 ** 8)
     for song in mPlaylist:
         #create the hash for the song
-        if (filterBadSongs(song["name"]) == False):
+        #if (filterBadSongs(song["name"]) == False):
             songName = song["name"]
             songArtist = song["artist"]
             songURL = song["url"]

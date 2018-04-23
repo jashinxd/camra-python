@@ -8,7 +8,7 @@ def createBadWordsENG():
            "nigga", "penis", "piss", "pussy",
            "scrotum", "sex", "shit", "slut",
            "smegma", "spunk", "twat", "vagina",
-           "wank", "whore"]
+           "wank", "whore", "erection"]
     return bad
 
 def createBadWordsRUS():
@@ -27,21 +27,17 @@ def filterBadSongs(songName):
     badEng = createBadWordsENG()
     badRus = createBadWordsRUS()
     if (len(badEng) == 0) or (len(badRus) == 0):
-        return False
+        return True
     if (songName == None):
-        return False
+        return True
     for word in badEng:
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
-            return False
-        else:
-            return True 
+            return True
     for word in badRus:
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
-            return False
-        else:
-            return True 
+            return True
     return False
 
 def censorFilteredWords(songName):
@@ -49,9 +45,9 @@ def censorFilteredWords(songName):
     badRus = createBadWordsRUS()
     cen = ""
     if (len(badEng) == 0) or (len(badRus) == 0):
-        return False
+        return True
     if (songName == None):
-        return False
+        return True
     for word in badEng:
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
