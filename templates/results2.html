@@ -1,0 +1,74 @@
+
+{% block contents %}
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+      <link rel='stylesheet prefetch' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'>
+      <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css'>
+      <link rel="stylesheet" href="../static/style2.css">
+      <title>CAMRA</title>    
+      <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js" integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l" crossorigin="anonymous"></script> 
+      <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js" integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c" crossorigin="anonymous"></script>
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+
+<body>
+  <div class="container">
+  <audio id="audio" preload="{{songs[0].url}}" tabindex="0">
+      {% set count = 0 %}
+        {% for song in songs %}
+                <source src="{{song.url}}" data-track-number="{{loop.index}}" />
+        {% endfor %}
+    		</audio>
+  <div class="player">
+    <div class="large-toggle-btn">
+      <i class="large-play-btn"><span class="screen-reader-text">Large toggle button</span></i>
+    </div>
+    <!-- /.play-box -->
+    <div class="info-box">
+      <div class="track-info-box">
+        <div class="track-title-text"></div>
+        <div class="audio-time">
+          <span class="current-time">00:00</span> /
+          <span class="duration">00:00</span>
+        </div>
+      </div>
+      <!-- /.info-box -->
+      <div class="progress-box">
+        <div class="progress-cell">
+          <div class="progress">
+            <div class="progress-buffer"></div>
+            <div class="progress-indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /.progress-box -->
+    <div class="controls-box">
+      <i class="previous-track-btn disabled"><span class="screen-reader-text">Previous track button</span></i>
+      <i class="next-track-btn"><span class="screen-reader-text">Next track button</span></i>
+    </div>
+    <!-- /.controls-box -->
+  </div>
+  <!-- /.player -->
+  <div class="play-list">
+    {% set count = 0 %}
+    {% for song in songs %}
+    <div class="play-list-row" data-track-row="{{loop.index}}">
+      <div class="small-toggle-btn">
+        <i class="small-play-btn"><span class="screen-reader-text">Small toggle button</span></i>
+      </div>
+      <div class="track-number">
+        {{loop.index}}.
+      </div>
+      <div class="track-title">
+        <a class="playlist-track" href="#" data-play-track="{{loop.index}}">{{song.artist}} - {{song.name}}</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+    <script type="text/javascript" src="{{ url_for('static', filename = 'webPlayer.js') }}"></script>
+</body>
+</html>
+{% endblock %}

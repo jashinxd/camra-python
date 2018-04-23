@@ -6,6 +6,7 @@ from flask_login import LoginManager, login_user, logout_user, current_user
 import sys, random
 from User import User
 from flask_sqlalchemy import SQLAlchemy
+from wordFilter import * 
 from sqlalchemy import *
 
 engine = create_engine('sqlite:///:memory:')
@@ -429,14 +430,15 @@ def insertDBMaster(mPlaylist, keyword):
     pID = abs(hash(keyword)) % (10 ** 8)
     for song in mPlaylist:
         #create the hash for the song
-        songName = song["name"]
-        songArtist = song["artist"]
-        songURL = song["url"]
-        songID = abs(hash(songName+songArtist)) % (10 ** 8)
-        songTuple = (songID, songName, songArtist, songURL)
-        playlistTuple = (pID, songID, keyword)
-        insertPlaylist.append(playlistTuple)
-        insertSongs.append(songTuple)
+        if (filterBadSongs(song["name"]) == False):
+            songName = song["name"]
+            songArtist = song["artist"]
+            songURL = song["url"]
+            songID = abs(hash(songName+songArtist)) % (10 ** 8)
+            songTuple = (songID, songName, songArtist, songURL)
+            playlistTuple = (pID, songID, keyword)
+            insertPlaylist.append(playlistTuple)
+            insertSongs.append(songTuple)
     #print("this is insertSongs" + str(insertSongs))
     cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
     conn.commit()
