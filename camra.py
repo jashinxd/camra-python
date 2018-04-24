@@ -475,7 +475,6 @@ def exportSpotify(pID, keyword, username):
     cursor = conn.cursor()
     trackURIs = []
     for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-        #print(row[0])
         results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
         trackURI = results["tracks"]["items"][0]["uri"]
         trackURIs.append(trackURI)
@@ -489,6 +488,35 @@ def exportSpotify(pID, keyword, username):
         result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
     return redirect(url_for('profile'))
 
+def deleteFromSaved(pid, songsToDelete):
+    #not sure if we want this to be passed in as song titles, or list of s_id --> I'll assume list of s_id 
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+
+    for s_id in songsToDelete:
+        cursor.execute('Delete FROM Playlist WHERE p_id =' + str(pid) + " AND s_id = " + str(s_id))
+        cursor.commit()
+    return redirect(url_for('profile')) #not sure if this is right --> want to refresh back to the users page OR refresh the view of this exact playlist?
+
+def addToSaved(pid,keyword):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    
+    while (true):
+        cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+        sid = cursor.fetchone()
+        cursor.execute("Select s_id from Playlist where p_id =  " + str(pid) + " AND s_id = " + str(sid))
+        sidCompare = cursor.fetchone()
+        if (sid != sidCompare):
+            playlistT = (pid, sid, keyword)
+            break
+
+    cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
+    cursor.commit()
+    return redirect(url_for('profile')) #very unsure if this is what it should be --> refresh the playlist view somehow
+    
 def init_db():
     db.init_app(app)
     db.app = app
