@@ -23,8 +23,11 @@
       Spotify Username: <input class="text" required= "required" name = "sUsername">
       Desired Playlist Name: <input class="text" required="required" name="pName">
     </div>
-    <input type="hidden" name="p_id" value="{{p_id}}">
     <button type="submit" class="btn btn-primary">Export to Spotify</button>
-    
+  </form>
+  <form method="post" action="/deletesongs">
+    <input type="hidden" name="p_id" value="{{p_id}}">
+    <button type="submit" class="btn btn-primary">Delete Songs</button> 
+  </form>
 </div>
 {% endblock %}

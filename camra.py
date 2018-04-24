@@ -95,7 +95,7 @@ def viewplaylist():
         p_id = form["p_id"]
         output = viewPlaylist(p_id)
         return render_template('view.html', songs=output, p_id=p_id)
-
+    
 @app.route("/export", methods=["GET", "POST"])
 def export():
     if request.method == "GET":
@@ -165,7 +165,7 @@ def profile():
         userPlaylists = getUserPlaylists()
         print(userPlaylists)
         return render_template('profile.html', userPlaylists=userPlaylists)
-
+    
 @app.route('/deleteplaylist', methods=['GET','POST'])
 def deleteplaylist():
     if request.method == 'GET':
@@ -174,6 +174,27 @@ def deleteplaylist():
         p_id = request.form['p_id']
         deletePlaylist(p_id)
         return redirect(url_for('profile'))
+
+@app.route('/deletesongs', methods=['GET','POST'])
+def deletesongs():
+    if request.method == 'GET':
+        return render_template('index.html')
+    if request.method == 'POST':
+        form = request.form
+        p_id = form["p_id"]
+        songs = viewPlaylist(p_id)
+        return render_template('delete.html', songs=songs, p_id=p_id)
+    
+@app.route('/deletesongscommit', methods=['GET','POST'])
+def deletesongscommit():
+    if request.method == 'GET':
+        return render_template('index.html')
+    if request.method == 'POST':
+        form = request.form
+        sid_list = form.getlist("s_id")
+        print(sid_list)
+        p_id = form["p_id"]
+        print(p_id)
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -314,6 +335,7 @@ def viewPlaylist(p_id):
         #print(song_info["name"])
         song_info["artist"] = artist
         song_info["url"] = url
+        song_info["s_id"] = s_id[0]
         song_info_json = json.loads(json.dumps(song_info))
         #print(song_info_json)
         output.append(song_info_json)
