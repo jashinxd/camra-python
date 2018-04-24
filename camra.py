@@ -64,8 +64,20 @@ def index():
         return render_template("index.html")
     elif request.method == "POST":
         form = request.form
-        print("SESSION" )
-        print(session["output"])
+        category = form["category"]
+        length = form["length"]
+        mood = form["moodoption"]
+        songs = []
+        if (category == "location"):
+            songs = getLocationSongs(length)
+        elif (category == "weather"):
+            songs = getWeatherSongs(length)
+        elif (category == "mood"):
+            songs = getSongs(mood, length)
+        session["output"] = songs
+        #print("SESSION" )
+        #print(session["output"])
+        """
         if request.form.get('location'):
             locationSongs = getLocationSongs(length)
             print("YOYOYO")
@@ -77,6 +89,7 @@ def index():
             mood = request.form.get['mood']
             allRequests = allRequests + getSongs(mood, length)
         session["output"] = allRequests
+        """
     return redirect(url_for("results"), code = 307)
 
 @app.route("/results", methods=["GET", "POST"])
