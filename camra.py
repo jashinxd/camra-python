@@ -105,7 +105,7 @@ def export():
         p_id = form["p_id"]
         name = form["pName"]
         username = form["sUsername"]
-        exportSpotify(p_id, name, username)
+        return exportSpotify(p_id, name, username)
         
 
 """
@@ -483,19 +483,19 @@ def exportSpotify(pID, keyword, username):
     cursor = conn.cursor()
     trackURIs = []
     for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-        print(row[0])
+        #print(row[0])
         results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
         trackURI = results["tracks"]["items"][0]["uri"]
         trackURIs.append(trackURI)
 
     scope = 'playlist-modify-private'
     
-    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'google.com')
+    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/profile')
     if token:
         uSpot = spotipy.Spotify(auth=token)
-        playlist = uSpot.user_playlist_create(username, keyword, public = False, description = "imported from CAMRA")
-        result = uSpot.user_playlist_add_tracks(username, playlist, trackURIs)
-        print(result)
+        playlist = uSpot.user_playlist_create(username, keyword, public = False)
+        result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
+    return redirect(url_for('profile'))
 
 def init_db():
     db.init_app(app)
