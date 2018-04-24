@@ -93,8 +93,9 @@ def viewplaylist():
     else:
         form = request.form
         p_id = form["p_id"]
+        keyword = form["keyword"]
         output = viewPlaylist(p_id)
-        return render_template('view.html', songs=output, p_id=p_id)
+        return render_template('view.html', songs=output, p_id=p_id, keyword=keyword)
     
 @app.route("/export", methods=["GET", "POST"])
 def export():
@@ -184,7 +185,18 @@ def deletesongs():
         p_id = form["p_id"]
         songs = viewPlaylist(p_id)
         return render_template('delete.html', songs=songs, p_id=p_id)
-    
+
+@app.route('/addsongs', methods=['GET','POST'])
+def addsongs():
+    if request.method == 'GET':
+        return render_template('index.html')
+    if request.method == 'POST':
+        form = request.form
+        p_id = form["p_id"]
+        keyword = form["keyword"]
+        print(p_id)
+        print(keyword)
+
 @app.route('/deletesongscommit', methods=['GET','POST'])
 def deletesongscommit():
     if request.method == 'GET':

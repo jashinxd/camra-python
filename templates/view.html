@@ -29,5 +29,10 @@
     <input type="hidden" name="p_id" value="{{p_id}}">
     <button type="submit" class="btn btn-primary">Delete Songs</button> 
   </form>
+  <form method="post" action="/addsongs">
+    <input type="hidden" name="p_id" value="{{p_id}}">
+    <input type="hidden" name="keyword" value="{{keyword}}">
+    <button type="submit" class="btn btn-primary">Add Song</button>
+  </form>
 </div>
 {% endblock %}
