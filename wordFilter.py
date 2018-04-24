@@ -52,12 +52,14 @@ def censorFilteredWords(songName):
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
             for i in list(word):
-                cen = cen.join("*")
+                cen = cen + "*"
     for word in badRus:
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
             for i in list(word):
-                cen = cen.join("*")
+                cen = cen + "*"
+    if cen is "":
+        cen = songName
     return cen
 
 

@@ -58,21 +58,26 @@ def load_user(username):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    allRequests = []
+    length = request.form.get("length")
     if request.method == "GET":
         return render_template("index.html")
     elif request.method == "POST":
         form = request.form
-        #print(form)
-        selection = form["category"]
-        mood = form["moodoption"]
-        length = form["length"]
-        print(length)
-        if selection == "weather":
-            return getWeatherSongs(length)
-        elif selection == "location":
-            return getLocationSongs(length)
-        elif selection == "mood":
-            return getSongs(mood,length)
+        print("SESSION" )
+        print(session["output"])
+        if request.form.get('location'):
+            locationSongs = getLocationSongs(length)
+            print("YOYOYO")
+            print(locationSongs)
+            allRequests = allRequests + getLocationSongs(length)
+        if request.form.get('weather'):
+            allRequests = allRequests + getWeatherSongs(length)
+        if request.form.get('mood'):
+            mood = request.form.get['mood']
+            allRequests = allRequests + getSongs(mood, length)
+        session["output"] = allRequests
+    return redirect(url_for("results"), code = 307)
 
 @app.route("/results", methods=["GET", "POST"])
 def results():
@@ -414,6 +419,8 @@ def createUserList(cursor, random_s_id):
         song_info_json = json.loads(json.dumps(song_info))
         #print(song_info_json)
         output.append(song_info_json)
+    print("PRINTING OUTPUT")
+    print(output)
     return output
 
 def getSongs(tag,length):
@@ -431,7 +438,8 @@ def getSongs(tag,length):
     output = createUserList(cursor, random_SIDs)            
     session["output"] = output
     session["keyword"] = tag
-    return redirect(url_for("results"), code = 307)
+    return output
+    #return redirect(url_for("results"), code = 307)
     #return render_template("results.html", songs = output)
 
 def insertDBMaster(mPlaylist, keyword):
