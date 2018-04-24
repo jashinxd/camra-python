@@ -196,6 +196,8 @@ def addsongs():
         keyword = form["keyword"]
         print(p_id)
         print(keyword)
+        addToSaved(p_id, keyword)
+        return redirect(url_for('profile'))
 
 @app.route('/deletesongscommit', methods=['GET','POST'])
 def deletesongscommit():
@@ -549,8 +551,10 @@ def addToSaved(pid,keyword):
     
     while (true):
         cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
-        sid = cursor.fetchone()
-        cursor.execute("Select s_id from Playlist where p_id =  " + str(pid) + " AND s_id = " + str(sid))
+        sid = cursor.fetchone()[0]
+        print("this is sid")
+        print(sid)
+        cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
         sidCompare = cursor.fetchone()
         if (sid != sidCompare):
             playlistT = (pid, sid, keyword)
