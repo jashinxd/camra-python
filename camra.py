@@ -194,7 +194,9 @@ def deletesongscommit():
         sid_list = form.getlist("s_id")
         print(sid_list)
         p_id = form["p_id"]
+        deleteFromSaved(p_id, sid_list)
         print(p_id)
+        return redirect(url_for('profile'))
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -519,15 +521,14 @@ def exportSpotify(pID, keyword, username):
     return redirect(url_for('profile'))
 
 def deleteFromSaved(pid, songsToDelete):
-    #not sure if we want this to be passed in as song titles, or list of s_id --> I'll assume list of s_id 
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
 
     for s_id in songsToDelete:
         cursor.execute('Delete FROM Playlist WHERE p_id =' + str(pid) + " AND s_id = " + str(s_id))
-        cursor.commit()
-    return redirect(url_for('profile')) #not sure if this is right --> want to refresh back to the users page OR refresh the view of this exact playlist?
+        conn.commit()
+    return redirect(url_for('profile')) 
 
 def addToSaved(pid,keyword):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -544,8 +545,8 @@ def addToSaved(pid,keyword):
             break
 
     cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
-    cursor.commit()
-    return redirect(url_for('profile')) #very unsure if this is what it should be --> refresh the playlist view somehow
+    conn.commit()
+    return redirect(url_for('profile')) 
     
 def init_db():
     db.init_app(app)
