@@ -25,19 +25,10 @@ def createPlaylist():
    # conn = sqlite3.connect('test.db',  check_same_thread=False)
    # cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer PRIMARY KEY, name text, artist text, url text)''')
-    """song = Table('song', metadata, 
-        Column('s_id', Integer, primary_key = True),
-        Column('artist', String(25)),
-        Column('url', String(200)))"""
     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, keyword text, FOREIGN KEY(keyword) REFERENCES masterPlaylist(keyword), FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
-    """playlist = Table('playlist', metadata, 
-        Column('p_id', Integer),
-        Column('s_id', Integer, ),
-        Column('url', String(200))) """
     cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist integer, p_id integer, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
     conn.commit()
-    #conn.close()
 
 try:
     path = os.path.dirname(os.path.abspath(__file__))
@@ -45,7 +36,6 @@ try:
     cursor = conn.cursor()
     cursor.execute('SELECT SQLITE_VERSION() ')
     data = cursor.fetchone()
-    print("DO IT")
     createPlaylist()
     print "SQLite version: %s" % data 
 except sqlite3.Error, e:
@@ -75,21 +65,6 @@ def index():
         elif (category == "mood"):
             songs = getSongs(mood, length)
         session["output"] = songs
-        #print("SESSION" )
-        #print(session["output"])
-        """
-        if request.form.get('location'):
-            locationSongs = getLocationSongs(length)
-            print("YOYOYO")
-            print(locationSongs)
-            allRequests = allRequests + getLocationSongs(length)
-        if request.form.get('weather'):
-            allRequests = allRequests + getWeatherSongs(length)
-        if request.form.get('mood'):
-            mood = request.form.get['mood']
-            allRequests = allRequests + getSongs(mood, length)
-        session["output"] = allRequests
-        """
     return redirect(url_for("results"), code = 307)
 
 @app.route("/results", methods=["GET", "POST"])
@@ -120,19 +95,6 @@ def export():
         name = form["pName"]
         username = form["sUsername"]
         return exportSpotify(p_id, name, username)
-        
-
-"""
-@app.route("/save", methods=["GET", "POST"])
-def save():
-    if request.method == "GET":
-        return redirect(url_for('index'))
-    else:
-        #Code to create a new user database
-        #returns userpage, but for now returns results
-        #return redirect(url_for('userpage'))
-        return render_template('results.html', songs=session["output"])
-"""
 
 @app.route("/modify", methods=["GET", "POST"])
 def modify():
@@ -146,13 +108,9 @@ def submitmodify():
     if request.method == "GET":
         return redirect(url_for('index'))
     else:
-        #Code to create a new user database
-        #returns userpage, but for now returns results
-        #return redirect(url_for('userpage')
         newoutput = []
         form = request.form
         newlist = form.getlist("songnames")
-        print(newlist)
         for song in session["output"]:
             if song["name"] in newlist:
                 newoutput.append(song)
@@ -170,7 +128,6 @@ def save():
 def profile():
     if request.method == 'GET':
         if (current_user.is_authenticated):
-            #playlists = getUserPlaylists()
             userPlaylists = getUserPlaylists()
             return render_template('profile.html', userPlaylists=userPlaylists)
         else:
@@ -225,6 +182,7 @@ def deletesongscommit():
         print(p_id)
         return redirect(url_for('profile'))
 
+#add some sort of check for oh this user already exists, or please put in a password, please put in an email (don't leave blank)
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'GET':
@@ -232,6 +190,12 @@ def register():
     form = request.form
     username = form['username']
     password = form['password']
+   # check = User.query.filter_by(username = username).first()
+    #print(check)
+    #if (check is not None):
+      #  print("in here!")
+       # flash ("This username already exists. Try again", 'error')
+        #return redirect(url_for('register'))
     user = User(username, password, 0)
     db.session.add(user)
     db.session.commit()
@@ -254,9 +218,9 @@ def login():
     else:
         login_user(registered_user)
         flash('Logged in successfully')
-        #session["user"] = registered_user
         return redirect(request.args.get('next') or url_for('index'))
 
+#are you sure you want to logout???
 @app.route('/logout')
 def logout():
     logout_user()
@@ -268,7 +232,8 @@ def getLocation():
     results = requests.get(url).json()
     city = results["city"]
     return city
-            
+
+#check to make sure that tag isnt null 
 def getLocationSongs(length):
     tag = getLocation()
     return getSongs(tag, length)
@@ -283,17 +248,16 @@ def getWeather():
     print("weather" + weather)
     return weather
 
+#check to make sure that tag isnt null
 def getWeatherSongs(length):
     tag = getWeather()
     return getSongs(tag, length)
 
+
 def getMasterList(tag):
-    print("IN THE MASTER")
-   
     songlist = []
     songCounter = 0
     sOffset = 0
-    print ("thar she blows")
     
     while (songCounter < 200):
         results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
@@ -320,12 +284,9 @@ def getMasterList(tag):
     requested = urllib2.urlopen(url)
     result = requested.read()
     r = json.loads(result)
-  # print("this is result " + result)
+    #check to make sure that the r isnt null
     for song in r["tracks"]["track"]:
-       # print("first one in ")
         results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
-        #print("now here")
-        #print(results["tracks"]["items"][0]["preview_url"])
         if (results["tracks"]["items"] != []):
             if (results["tracks"]["items"][0]["preview_url"] != None):
                 Nsong = {}
@@ -333,11 +294,6 @@ def getMasterList(tag):
                 Nsong["artist"] = song["artist"]["name"]
                 Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
                 songlist.append(Nsong)
-      #  print("iteration done")
-    
-   # for playlist in results:
-
-    print("we about to return")
     return songlist
 
 def viewPlaylist(p_id):
@@ -361,12 +317,10 @@ def viewPlaylist(p_id):
         url = cursor.fetchone()[0]
         song_info = {}
         song_info["name"] = song
-        #print(song_info["name"])
         song_info["artist"] = artist
         song_info["url"] = url
         song_info["s_id"] = s_id[0]
         song_info_json = json.loads(json.dumps(song_info))
-        #print(song_info_json)
         output.append(song_info_json)
     return output
 
@@ -441,15 +395,12 @@ def getUserPlaylists():
             keywordList.append(keyword)
         else:
             keywordList.append(keyword[0].encode("ascii"))
-    print(keywordList)
     for pid in p_id_arr:
         cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+str(pid[0]))
         plLength = len(cursor.fetchall())
         lengthList.append(plLength)
-    print(lengthList)
     for index, pid in enumerate(p_id_arr):
         dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index]})
-    print(dictList)
     return dictList
     
 
@@ -464,14 +415,10 @@ def createUserList(cursor, random_s_id):
         url = cursor.fetchone()[0]
         song_info = {}
         song_info["name"] = song
-        #print(song_info["name"])
         song_info["artist"] = artist
         song_info["url"] = url
         song_info_json = json.loads(json.dumps(song_info))
-        #print(song_info_json)
         output.append(song_info_json)
-    print("PRINTING OUTPUT")
-    print(output)
     return output
 
 def getSongs(tag,length):
@@ -490,15 +437,11 @@ def getSongs(tag,length):
     session["output"] = output
     session["keyword"] = tag
     return output
-    #return redirect(url_for("results"), code = 307)
-    #return render_template("results.html", songs = output)
 
 def insertDBMaster(mPlaylist, keyword):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    print("should be entering this only once tbh")
-    #iterate over the master playlist creating/inserting the songs
     insertSongs = []
     insertPlaylist = []
     insertMaster = []
@@ -514,14 +457,8 @@ def insertDBMaster(mPlaylist, keyword):
             playlistTuple = (pID, songID, keyword)
             insertPlaylist.append(playlistTuple)
             insertSongs.append(songTuple)
-    #print("this is insertSongs" + str(insertSongs))
     cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
     conn.commit()
-    
-    for row in cursor.execute("SELECT * FROM Song"):
-       print(row)
-    #conn.close()
-    #create a playlist entry with all the songs in mPlaylist (some for loop)
     cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
     conn.commit()
     #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
@@ -535,12 +472,13 @@ def exportSpotify(pID, keyword, username):
     trackURIs = []
     for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
         results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
-        trackURI = results["tracks"]["items"][0]["uri"]
-        trackURIs.append(trackURI)
+        if (results["tracks"]["items"][0] != None):
+            trackURI = results["tracks"]["items"][0]["uri"]
+            trackURIs.append(trackURI)
 
     scope = 'playlist-modify-private'
     
-    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/profile')
+    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/callback')
     if token:
         uSpot = spotipy.Spotify(auth=token)
         playlist = uSpot.user_playlist_create(username, keyword, public = False)
@@ -565,8 +503,6 @@ def addToSaved(pid,keyword):
     while (true):
         cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
         sid = cursor.fetchone()[0]
-        print("this is sid")
-        print(sid)
         cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
         sidCompare = cursor.fetchone()
         if (sid != sidCompare):
