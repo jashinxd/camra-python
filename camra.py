@@ -378,6 +378,9 @@ def getUserPlaylists():
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     username = current_user.username
+    if (cursor == None or username == None):
+        print("ERROR: unable to retrieve information to get user playlists")
+        return -1
     dictList = []
     p_id_arr = []
     keywordList = []
@@ -405,20 +408,35 @@ def getUserPlaylists():
     
 
 def createUserList(cursor, random_s_id):
-    output = []    
-    for s_id in random_s_id:
-        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
-        song = cursor.fetchone()[0]
-        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
-        artist = cursor.fetchone()[0]
-        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
-        url = cursor.fetchone()[0]
-        song_info = {}
-        song_info["name"] = song
-        song_info["artist"] = artist
-        song_info["url"] = url
-        song_info_json = json.loads(json.dumps(song_info))
-        output.append(song_info_json)
+    output = []   
+    if (random_s_id is None or cursor is None):
+        print ("ERROR: one or more input used to createUserList does not exist")
+    else:
+        for s_id in random_s_id:
+            cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+            song = cursor.fetchone()[0]
+            if (song == None):
+                print("ERROR: something went wrong with the retrieval of song name")
+            else:
+                cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+                artist = cursor.fetchone()[0]
+                if (artist == None):
+                print("ERROR: something went wrong with the retrieval of song artist")
+                else:
+                    cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+                    url = cursor.fetchone()[0]
+                    if (url == None):
+                        print("ERROR: something went wrong with the retrieval of song url")
+                    else:
+                        song_info = {}
+                        song_info["name"] = song
+                        song_info["artist"] = artist
+                        song_info["url"] = url
+                        song_info_json = json.loads(json.dumps(song_info))
+                        output.append(song_info_json)
+        if (output is None):
+            print("ERROR: not able to retrieve the song information of the inputted list")
+            return -1
     return output
 
 def getSongs(tag,length):
@@ -426,17 +444,35 @@ def getSongs(tag,length):
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     cursor.execute("SELECT keyword FROM masterPlaylist WHERE keyword ="+'"'+tag+'"')
-    if (cursor.fetchone() == None):
-        songlist = getMasterList(tag)
-        insertDBMaster(songlist, tag)
-        conn.commit()
-    random_SIDs = getRandomSIDs(cursor, tag, length)
-    if type(random_SIDs) != list:
-        return random_SIDs
-    output = createUserList(cursor, random_SIDs)            
-    session["output"] = output
-    session["keyword"] = tag
-    return output
+    if (tag == None or length == None):
+        print("ERROR: one or more inputs to getSongs does not exist")
+        return -1
+    else:
+        if (cursor.fetchone() == None):
+            songlist = getMasterList(tag)
+            if (songlist == -1):
+                print("ERROR: unable to retrieve Master List")
+                return -1
+            else:
+                ret = insertDBMaster(songlist, tag)
+                if (ret == -1):
+                    print("ERROR: unable to insert into Master")
+                    return -1
+                conn.commit()
+        random_SIDs = getRandomSIDs(cursor, tag, length)
+        if (random_SIDS == -1):
+            print("ERROR: unable to get Random SIDS")
+            return -1
+        if type(random_SIDs) != list:
+            return random_SIDs
+        output = createUserList(cursor, random_SIDs) 
+        if (output == -1):
+            print("ERROR: unable to create User List")
+            return -1 
+        else:          
+            session["output"] = output
+            session["keyword"] = tag
+            return output
 
 def insertDBMaster(mPlaylist, keyword):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -445,73 +481,110 @@ def insertDBMaster(mPlaylist, keyword):
     insertSongs = []
     insertPlaylist = []
     insertMaster = []
-    pID = abs(hash(keyword)) % (10 ** 8)
-    for song in mPlaylist:
-        #create the hash for the song
-        if (filterBadSongs(song["name"]) == False):
-            songName = song["name"]
-            songArtist = song["artist"]
-            songURL = song["url"]
-            songID = abs(hash(songName+songArtist)) % (10 ** 8)
-            songTuple = (songID, songName, songArtist, songURL)
-            playlistTuple = (pID, songID, keyword)
-            insertPlaylist.append(playlistTuple)
-            insertSongs.append(songTuple)
-    cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
-    conn.commit()
-    cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
-    conn.commit()
-    #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
-    cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
-    conn.commit()
+    if (mPlaylist == None or keyword == None):
+        print("ERROR: one or more inputs to insertDBMaster does not exist")
+        return -1
+    else:
+        pID = abs(hash(keyword)) % (10 ** 8)
+        for song in mPlaylist:
+            #create the hash for the song
+            if (filterBadSongs(song["name"]) == False):
+                songName = song["name"]
+                songArtist = song["artist"]
+                songURL = song["url"]
+                songID = abs(hash(songName+songArtist)) % (10 ** 8)
+                songTuple = (songID, songName, songArtist, songURL)
+                for (item in songTuple):
+                    if (item == None):
+                        print("ERROR: one or more fields in songTuple does not exist")
+                        return -1
+                playlistTuple = (pID, songID, keyword)
+                insertPlaylist.append(playlistTuple)
+                insertSongs.append(songTuple)
+       
+        cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
+        conn.commit()
+        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
+        conn.commit()
+        cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
+        conn.commit()
+        cursor.execute("SELECT * FROM masterPlaylist WHERE p_id = " + str(pID) + " AND keyword = " + "'"+keyword+"'" + "length = " + str(len(mPlaylist)))
+        if (cursor.fetchone() == None):
+            print("ERROR: unable to insert Master Playlist entry")
 
 def exportSpotify(pID, keyword, username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     trackURIs = []
-    for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-        results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
-        if (results["tracks"]["items"][0] != None):
-            trackURI = results["tracks"]["items"][0]["uri"]
-            trackURIs.append(trackURI)
+    if (pID == None or keyword == None or username == None):
+        print("ERROR: one or more inputs to exportSpotify don't exist")
+        return -1
+    else:
+        for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
+            results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
+            if (results["tracks"]["items"][0] != None):
+                trackURI = results["tracks"]["items"][0]["uri"]
+                trackURIs.append(trackURI)
 
-    scope = 'playlist-modify-private'
-    
-    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/callback')
-    if token:
-        uSpot = spotipy.Spotify(auth=token)
-        playlist = uSpot.user_playlist_create(username, keyword, public = False)
-        result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
-    return redirect(url_for('profile'))
+        scope = 'playlist-modify-private'
+        
+        token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/callback')
+        if token:
+            uSpot = spotipy.Spotify(auth=token)
+            playlist = uSpot.user_playlist_create(username, keyword, public = False)
+            result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
+        else:
+            print("unable to retrieve token")
+            return -1
+        return redirect(url_for('profile'))
 
 def deleteFromSaved(pid, songsToDelete):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-
-    for s_id in songsToDelete:
-        cursor.execute('Delete FROM Playlist WHERE p_id =' + str(pid) + " AND s_id = " + str(s_id))
-        conn.commit()
+    if (pid == None or songsToDelete == None):
+        print("ERROR: one or more inputs to deleteFromSaved does not exist")
+        return -1
+    else:
+        for s_id in songsToDelete:
+            cursor.execute('Delete FROM Playlist WHERE p_id =' + str(pid) + " AND s_id = " + str(s_id))
+            conn.commit()
+            cursor.execute("SELECT FROM Playlist WHERE p_id = " + str(pid) + " AND s_id =" + str(s_id))
+            if (cursor.fetchone() != None):
+                print("ERROR: did not successfully delete song from desired playlist")
+                return -1
     return redirect(url_for('profile')) 
 
 def addToSaved(pid,keyword):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    
-    while (true):
-        cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
-        sid = cursor.fetchone()[0]
-        cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
-        sidCompare = cursor.fetchone()
-        if (sid != sidCompare):
-            playlistT = (pid, sid, keyword)
-            break
+    playlistT = ()
+    if (pid == None or keyword == None or cursor == None):
+        print("ERROR: one or more inputs to addToSaved does not exist")
+        return -1
+    else:
+        while (true):
+            cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+            sid = cursor.fetchone()[0]
+            if (sid == None):
+                print("ERROR: relevant sid unable to be found")
+            playlistsid = cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
+            for (sidCompare in playlistsid):
+                if (sid != sidCompare):
+                    playlistT = (pid, sid, keyword)
+                    break
+            if (playlistT != None):
+                break
 
-    cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
-    conn.commit()
-    return redirect(url_for('profile')) 
+        cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
+        conn.commit()
+        cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(playlistT[0]) + " AND s_id = " + str(playlistT[1]) + " AND keyword = " + str(playlistT[2]))
+        if (cursor.fetchone() == None):
+            print("ERROR: unable to insert new song into playlist")
+            return -1
+        return redirect(url_for('profile')) 
     
 def init_db():
     db.init_app(app)
