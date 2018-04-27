@@ -553,7 +553,7 @@ def getSongs(tag,length):
                     return -1
                 conn.commit()
         random_SIDs = getRandomSIDs(cursor, tag, length)
-        if (random_SIDS == -1):
+        if (random_SIDs == -1):
             print("ERROR: unable to get Random SIDS")
             return -1
         if type(random_SIDs) != list:
