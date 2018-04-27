@@ -190,17 +190,18 @@ def register():
     form = request.form
     username = form['username']
     password = form['password']
-   # check = User.query.filter_by(username = username).first()
-    #print(check)
-    #if (check is not None):
-      #  print("in here!")
-       # flash ("This username already exists. Try again", 'error')
-        #return redirect(url_for('register'))
-    user = User(username, password, 0)
-    db.session.add(user)
-    db.session.commit()
-    flash('User successfully registered')
-    return redirect(url_for('login'))
+    check = User.query.filter_by(username = username).first()
+    if (check is not None):
+        print("in here!")
+        message = "This username already exists. Try again"
+        flash ("This username already exists. Try again", 'error')
+        return render_template('register.html', message=message)
+    else:
+        user = User(username, password, 0)
+        db.session.add(user)
+        db.session.commit()
+        flash('User successfully registered')
+        return redirect(url_for('login'))
  
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -254,47 +255,114 @@ def getWeatherSongs(length):
     return getSongs(tag, length)
 
 
+def getSpotifySongs(results):
+    if (results != None):
+        for playlist in results["playlists"]["items"]:
+            if (playlist["id"] != None):
+                playlistid = playlist["id"]
+            else:
+                playlistid = "PlaylistID does not exist"
+            if (playlist["owner"]["id"] != None):
+                playlistuser = playlist["owner"]["id"]
+            else:
+                playlistuser = "PlaylistUser does not exist"
+            if ((playlistid != "PlaylistID does not exist") and (playlistid != "PlaylistUser does not exist")):
+                psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
+            else:
+                continue
+        return psongs
+    else:
+        return -1    
+
+def createSpotifySongObjects(psongs):
+    songlist = []
+    if (psongs != None):
+        for tInfo in psongs["items"]:
+            song = {}
+            if (tInfo["track"]["name"] != None):
+                song["name"] = tInfo["track"]["name"]
+            else:
+                song["name"] = "No Name Exists"
+            if (tInfo["track"]["artists"][0]["name"] != None):
+                song["artist"] = tInfo["track"]["artists"][0]["name"]
+            else:
+                song["artist"] = "No Artist Exists"
+            if (tInfo["track"]["preview_url"] != None):
+                song["url"] = tInfo["track"]["preview_url"]
+            else:
+                song["url"] = "No URL Exists"
+            if (song["url"] != "No URL Exists"):
+                print("song: " + tInfo["track"]["name"])
+                print("artist: " + tInfo["track"]["artists"][0]["name"])
+                print("url:" + tInfo["track"]["preview_url"])
+                songlist.append(song)
+        return songlist
+    else:
+        return -1
+
+def createLastFMSongs(r):
+    if (r != None):
+        songlist = []
+        for song in r["tracks"]["track"]:
+            if (song != None):
+                results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+                if (results["tracks"]["items"] != []):
+                    Nsong = {}
+                    if (song["name"] != None):
+                        Nsong["name"] = song["name"]
+                    else:
+                        Nsong["name"] = "Name Does Not Exist"
+                    if (song["artist"]["name"] != None):
+                        Nsong["artist"] = song["artist"]["name"]
+                    else:
+                        Nsong["artist"] = "Artist Does Not Exist"
+                    if (results["tracks"]["items"][0]["preview_url"] != None):
+                        Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
+                    else:
+                        Nsong["url"] = "URL Does Not Exist"
+                        print("url does not exist")
+                    if ((Nsong["name"] != "Name Does Not Exist") and
+                        (Nsong["artist"] != "Artist Does Not Exist") and
+                        (Nsong["url"] != "URL Does Not Exist")):
+                        print("everything ok")
+                        songlist.append(Nsong)
+        return songlist
+    else:
+        return -1
+    
 def getMasterList(tag):
     songlist = []
     songCounter = 0
     sOffset = 0
-    
     while (songCounter < 200):
         results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
-
-        for playlist in results["playlists"]["items"]:
-            playlistid = playlist["id"]
-            playlistuser = playlist["owner"]["id"]
-            sOffset += 2
-            psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
-       
-            for tInfo in psongs["items"]:
-                song = {}
-                song["name"] = tInfo["track"]["name"]
-                song["artist"] = tInfo["track"]["artists"][0]["name"]
-                song["url"] = tInfo["track"]["preview_url"]
-                songCounter += 1
-                if (song["url"] != None):
-                    print("song: " + tInfo["track"]["name"])
-                    print("artist: " + tInfo["track"]["artists"][0]["name"])
-                    print("url:" + tInfo["track"]["preview_url"])
-                    songlist.append(song)
-        
+        if (results != None):
+            psongs = getSpotifySongs(results)
+            if (psongs == -1):
+                continue
+            else:
+                sOffset += 2
+                if (psongs != {}):
+                    songlist = createSpotifySongObjects(psongs)
+                    if (songlist == -1):
+                        continue
+                    else:
+                        songCounter += len(songlist)
     url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=200"
     requested = urllib2.urlopen(url)
     result = requested.read()
     r = json.loads(result)
     #check to make sure that the r isnt null
-    for song in r["tracks"]["track"]:
-        results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
-        if (results["tracks"]["items"] != []):
-            if (results["tracks"]["items"][0]["preview_url"] != None):
-                Nsong = {}
-                Nsong["name"] = song["name"]
-                Nsong["artist"] = song["artist"]["name"]
-                Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
-                songlist.append(Nsong)
-    return songlist
+    if r != None:
+        lastFMSongList = createLastFMSongs(r)
+        if (lastFMSongList != -1):
+            songlist.extend(lastFMSongList)
+            print("getstoreasnkdsj")
+            return songlist
+        else:
+            return -1
+    else:
+        return -1            
 
 def viewPlaylist(p_id):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -310,11 +378,17 @@ def viewPlaylist(p_id):
     output = []
     for s_id in s_id_arr:
         cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
-        song = cursor.fetchone()[0]
+        song = cursor.fetchone()
+        if (song != None):
+            song = song[0]
         cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
-        artist = cursor.fetchone()[0]
+        artist = cursor.fetchone()
+        if (artist != None):
+            artist = artist[0]
         cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
-        url = cursor.fetchone()[0]
+        url = cursor.fetchone()
+        if (url != None):
+            url = url[0]
         song_info = {}
         song_info["name"] = song
         song_info["artist"] = artist
@@ -332,19 +406,33 @@ def deletePlaylist(p_id):
         cursor.execute("DELETE FROM Playlist WHERE p_id ="+p_id)
         cursor.execute("DELETE FROM users WHERE p_id = "+p_id)
         conn.commit()
+    cursor.execute("SELECT * FROM Playlist WHERE p_id ="+p_id)
+    checkPlaylist = cursor.fetchone()
+    if (checkPlaylist != None):
+        return -1
+    cursor.execute("SELECT * FROM users WHERE p_id ="+p_id)
+    checkUsers = cursor.fetchone()
+    if (checkUsers != None):
+        return -1
 
 def getRandomSIDs(cursor, tag, length):
     s_id_arr = []
     cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+tag+'"')
     sid = cursor.fetchone()
-    while (sid != None):
-        s_id_arr.append(sid)
-        sid = cursor.fetchone()
-    if (len(s_id_arr) < int(length)):
-        return render_template("index.html", message = "You requested for too many songs. The maximum number of songs for this category is " + str(len(s_id_arr)))
-    print(int(length))
-    print random.sample(s_id_arr, int(length))
-    return random.sample(s_id_arr, int(length))
+    if (sid == None):
+        return -1
+    else:
+        while (sid != None):
+            s_id_arr.append(sid)
+            sid = cursor.fetchone()
+        if (len(s_id_arr) < int(length)):
+            return render_template("index.html", message = "You requested for too many songs. The maximum number of songs for this category is " + str(len(s_id_arr)))
+        print(int(length))
+        randomList = random.sample(s_id_arr, int(length))
+        if (len(randomList) == int(length)):
+            return randomList
+        else:
+            return getRandomSIDs(cursor, tag, length)
 
 # Inserts the song into the playlist database
 def insertUserPlaylist():
@@ -353,6 +441,8 @@ def insertUserPlaylist():
     cursor = conn.cursor()
     if current_user.is_authenticated:
         username = current_user.username
+        if (username == None):
+            return redirect(url_for('index'))
         cursor.execute("SELECT p_id FROM users WHERE username = "+'"'+username+'"')
         numPlaylists = len(cursor.fetchall())
         keyword = username + str(numPlaylists) 
@@ -360,18 +450,35 @@ def insertUserPlaylist():
         user = User(username, "0", pID)
         db.session.add(user)
         db.session.commit()
+        cursor.execute("SELECT * FROM users WHERE p_id ="+str(pID))
+        playlistInserted = cursor.fetchone()
+        if (playlistInserted == None):
+            return redirect(url_for('index'))
         insertPlaylist = []
         for song in session["output"]:
-            songName = song["name"]
-            songArtist = song["artist"]
-            songID = abs(hash(songName+songArtist)) % (10 ** 8)
-            playlistTuple = (pID, songID, session["keyword"])
-            insertPlaylist.append(playlistTuple)
+            if ((song["name"] != None) and (song["artist"] != None)):
+                songName = song["name"]
+                songArtist = song["artist"]
+                songID = abs(hash(songName+songArtist)) % (10 ** 8)
+                playlistTuple = (pID, songID, session["keyword"])
+                insertPlaylist.append(playlistTuple)
         cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
         conn.commit()
+        for song in session["output"]:
+            if ((song["name"] != None) and (song["artist"] != None)):
+                songName = song["name"]
+                songArtist = song["artist"]
+                songID = abs(hash(songName+songArtist)) % (10 ** 8)
+                cursor.execute("SELECT * FROM Playlist WHERE p_id="+str(pID)+" AND s_id="+str(songID)+" AND keyword="+'"'+session["keyword"]+'"')
+                songInserted = cursor.fetchone()
+                print(songInserted)
+                if (songInserted == None):
+                    return redirect(url_for(index))
         session["output"] = []
         session["keyword"] = None
-    return redirect(url_for('profile'), code = 307) 
+        return redirect(url_for('profile'), code = 307)
+    else:
+        return redirect(url_for('index'))    
 
 def getUserPlaylists():
     path = os.path.dirname(os.path.abspath(__file__))
