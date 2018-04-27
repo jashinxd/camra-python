@@ -610,20 +610,6 @@ def exportSpotify(pID, keyword, username):
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     trackURIs = []
-<<<<<<< HEAD
-    for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-        results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
-        if (results["tracks"]["items"][0] != None):
-            trackURI = results["tracks"]["items"][0]["uri"]
-            trackURIs.append(trackURI)
-    scope = 'playlist-modify-private'
-    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/callback')
-    if token:
-        uSpot = spotipy.Spotify(auth=token)
-        playlist = uSpot.user_playlist_create(username, keyword, public = False)
-        result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
-    return redirect(url_for('profile'))
-=======
     if (pID == None or keyword == None or username == None):
         print("ERROR: one or more inputs to exportSpotify don't exist")
         return -1
@@ -645,7 +631,6 @@ def exportSpotify(pID, keyword, username):
             print("unable to retrieve token")
             return -1
         return redirect(url_for('profile'))
->>>>>>> 7ded0c66557de3fd8240b60a51db7cf16350e502
 
 def deleteFromSaved(pid, songsToDelete):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -668,22 +653,6 @@ def addToSaved(pid,keyword):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-<<<<<<< HEAD
-    
-    while (true):
-        cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
-        sid = cursor.fetchone()[0]
-        cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
-        sidCompare = cursor.fetchone()
-        if (sid != sidCompare):
-            playlist = (pid, sid, keyword)
-            break
-
-    cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlist)
-    conn.commit()
-    return redirect(url_for('profile')) 
-    
-=======
     playlistT = ()
     if (pid == None or keyword == None or cursor == None):
         print("ERROR: one or more inputs to addToSaved does not exist")
@@ -726,7 +695,6 @@ def addToSaved(pid,keyword):
    # scaredSongs = get
 
 
->>>>>>> 7ded0c66557de3fd8240b60a51db7cf16350e502
 def init_db():
     db.init_app(app)
     db.app = app
