@@ -421,7 +421,7 @@ def createUserList(cursor, random_s_id):
                 cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
                 artist = cursor.fetchone()[0]
                 if (artist == None):
-                print("ERROR: something went wrong with the retrieval of song artist")
+                    print("ERROR: something went wrong with the retrieval of song artist")
                 else:
                     cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
                     url = cursor.fetchone()[0]
@@ -494,7 +494,7 @@ def insertDBMaster(mPlaylist, keyword):
                 songURL = song["url"]
                 songID = abs(hash(songName+songArtist)) % (10 ** 8)
                 songTuple = (songID, songName, songArtist, songURL)
-                for (item in songTuple):
+                for item in songTuple:
                     if (item == None):
                         print("ERROR: one or more fields in songTuple does not exist")
                         return -1
@@ -571,7 +571,7 @@ def addToSaved(pid,keyword):
             if (sid == None):
                 print("ERROR: relevant sid unable to be found")
             playlistsid = cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
-            for (sidCompare in playlistsid):
+            for sidCompare in playlistsid:
                 if (sid != sidCompare):
                     playlistT = (pid, sid, keyword)
                     break
@@ -585,7 +585,23 @@ def addToSaved(pid,keyword):
             print("ERROR: unable to insert new song into playlist")
             return -1
         return redirect(url_for('profile')) 
-    
+# This method pre-stores popular tags for emotion, location, and weather  
+#def loadDatabases():
+ #   happySongs = getMasterList('happy')
+  #  insertDBMaster(happySongs, 'happy')
+
+   # sadSongs = getMasterList('sad')
+    #insertDBMaster(sadSongs, 'sad')
+
+    #angrySongs = getMasterList('angry')
+    #insertDBMaster(angrySongs, 'angry')
+
+    #nervousSongs = getMasterList('nervous')
+    #insertDBMaster(nervousSongs, 'nervous')
+
+   # scaredSongs = get
+
+
 def init_db():
     db.init_app(app)
     db.app = app
