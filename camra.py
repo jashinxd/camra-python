@@ -21,26 +21,179 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+
 def createPlaylist():
-   # conn = sqlite3.connect('test.db',  check_same_thread=False)
-   # cursor = conn.cursor()
+    conn = sqlite3.connect('test.db',  check_same_thread=False)
+    cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer PRIMARY KEY, name text, artist text, url text)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, keyword text, FOREIGN KEY(keyword) REFERENCES masterPlaylist(keyword), FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist integer, p_id integer, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
     conn.commit()
+    
+def getMasterList(tag):
+    songlist = []
+    songCounter = 0
+    sOffset = 0
+    
+    while (songCounter < 200):
+        results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
 
-try:
+        for playlist in results["playlists"]["items"]:
+            playlistid = playlist["id"]
+            if (',' not in playlist["owner"]["id"]):
+                playlistuser = playlist["owner"]["id"]
+                print(playlistuser)
+                sOffset += 2
+                print("why are u here")
+                psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
+            else:
+                continue
+       
+            for tInfo in psongs["items"]:
+                song = {}
+                song["name"] = tInfo["track"]["name"]
+                song["artist"] = tInfo["track"]["artists"][0]["name"]
+                song["url"] = tInfo["track"]["preview_url"]
+                songCounter += 1
+                if (song["url"] != None):
+                  #  print("song: " + tInfo["track"]["name"])
+                  #  print("artist: " + tInfo["track"]["artists"][0]["name"])
+                   # print("url:" + tInfo["track"]["preview_url"])
+                    songlist.append(song)
+
+        
+    print("before this last fm")
+    url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=200"
+    requested = urllib2.urlopen(url)
+    result = requested.read()
+    r = json.loads(result)
+    #check to make sure that the r isnt null
+    for song in r["tracks"]["track"]:
+        results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+        if (results["tracks"]["items"] != []):
+            if (results["tracks"]["items"][0]["preview_url"] != None):
+                Nsong = {}
+                Nsong["name"] = song["name"]
+                Nsong["artist"] = song["artist"]["name"]
+                Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
+                songlist.append(Nsong)
+    return songlist
+
+def insertDBMaster(mPlaylist, keyword):
+    print("entered insert db master")
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT SQLITE_VERSION() ')
-    data = cursor.fetchone()
-    createPlaylist()
-    print "SQLite version: %s" % data 
-except sqlite3.Error, e:
-    print "Error %s:" % e.args[0]
-    sys.exit(1)
+    insertSongs = []
+    insertPlaylist = []
+    insertMaster = []
+    if (mPlaylist == None or keyword == None):
+        print("ERROR: one or more inputs to insertDBMaster does not exist")
+        return -1
+    else:
+        pID = abs(hash(keyword)) % (10 ** 8)
+        for song in mPlaylist:
+            #create the hash for the song
+            if (filterBadSongs(song["name"]) == False):
+                songName = song["name"]
+                songArtist = song["artist"]
+                songURL = song["url"]
+                songID = abs(hash(songName+songArtist)) % (10 ** 8)
+                songTuple = (songID, songName, songArtist, songURL)
+                for item in songTuple:
+                    if (item == None):
+                        print("ERROR: one or more fields in songTuple does not exist")
+                        return -1
+                playlistTuple = (pID, songID, keyword)
+                insertPlaylist.append(playlistTuple)
+                insertSongs.append(songTuple)
+       
+        cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
+        conn.commit()
+        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
+        conn.commit()
+        cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
+        conn.commit()
+        print(keyword) # something wrong here
+        cursor.execute("SELECT * FROM masterPlaylist WHERE mp_id = " + str(pID) + " AND keyword = " + "'"+ keyword +"'" + " AND length = " + str(len(mPlaylist)))
+        if (cursor.fetchone() == None):
+            print("ERROR: unable to insert Master Playlist entry")
+
+def loadDatabases():
+    
+    happySongs = getMasterList('happy')
+    insertDBMaster(happySongs, 'happy')
+
+    print("happy")
+
+    sadSongs = getMasterList('sad')
+    insertDBMaster(sadSongs, 'sad')
+
+    print("sad")
+
+    angrySongs = getMasterList('angry')
+    insertDBMaster(angrySongs, 'angry')
+
+    print("angry")
+
+    nervousSongs = getMasterList('nervous')
+    insertDBMaster(nervousSongs, 'nervous')
+
+    print("nervous")
+
+    scaredSongs = getMasterList('scared')
+    insertDBMaster(scaredSongs, 'scared')
+    print("scared")
+
+    thunderstorm = getMasterList("Thunderstorm")
+    insertDBMaster(thunderstorm, 'Thunderstorm')
+    print("thunder")
+
+    drizzle = getMasterList("Drizzle")
+    insertDBMaster(drizzle, 'Drizzle')
+    print("drizz")
+
+    rain = getMasterList("Rain")
+    insertDBMaster(rain, 'Rain')
+    print("rain")
+
+    snow = getMasterList("Snow")
+    insertDBMaster(snow, 'Snow')
+    print("snow")
+
+    clear = getMasterList("Clear")
+    insertDBMaster(clear, 'Clear')
+    print("clear")
+
+    clouds = getMasterList("Clouds")
+    insertDBMaster(clouds, 'Clouds')
+    print("cloud")
+
+    extreme = getMasterList("Extreme")
+    insertDBMaster(extreme, 'Extreme')
+    print("extreme")
+
+    boston = getMasterList("Boston")
+    insertDBMaster(boston, 'Boston')
+    print("bost")
+
+    washingtonDC = getMasterList("Washington DC")
+    insertDBMaster(washingtonDC, 'Washington DC')
+    print("dc")
+
+    LA = getMasterList("Los Angeles")
+    insertDBMaster(LA, 'Los Angeles')
+    print("la")
+
+    seattle = getMasterList("Seattle")
+    insertDBMaster(seattle, 'Seattle')
+    print("seat")
+
+    columbus = getMasterList("Columbus")
+    insertDBMaster(columbus, 'Columbus')
+    print("col")
+    print("FIN")
 
 @login_manager.user_loader
 def load_user(username):
@@ -254,47 +407,6 @@ def getWeatherSongs(length):
     return getSongs(tag, length)
 
 
-def getMasterList(tag):
-    songlist = []
-    songCounter = 0
-    sOffset = 0
-    
-    while (songCounter < 200):
-        results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
-
-        for playlist in results["playlists"]["items"]:
-            playlistid = playlist["id"]
-            playlistuser = playlist["owner"]["id"]
-            sOffset += 2
-            psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
-       
-            for tInfo in psongs["items"]:
-                song = {}
-                song["name"] = tInfo["track"]["name"]
-                song["artist"] = tInfo["track"]["artists"][0]["name"]
-                song["url"] = tInfo["track"]["preview_url"]
-                songCounter += 1
-                if (song["url"] != None):
-                    print("song: " + tInfo["track"]["name"])
-                    print("artist: " + tInfo["track"]["artists"][0]["name"])
-                    print("url:" + tInfo["track"]["preview_url"])
-                    songlist.append(song)
-        
-    url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=200"
-    requested = urllib2.urlopen(url)
-    result = requested.read()
-    r = json.loads(result)
-    #check to make sure that the r isnt null
-    for song in r["tracks"]["track"]:
-        results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
-        if (results["tracks"]["items"] != []):
-            if (results["tracks"]["items"][0]["preview_url"] != None):
-                Nsong = {}
-                Nsong["name"] = song["name"]
-                Nsong["artist"] = song["artist"]["name"]
-                Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
-                songlist.append(Nsong)
-    return songlist
 
 def viewPlaylist(p_id):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -474,43 +586,7 @@ def getSongs(tag,length):
             session["keyword"] = tag
             return output
 
-def insertDBMaster(mPlaylist, keyword):
-    path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + '/test.db')
-    cursor = conn.cursor()
-    insertSongs = []
-    insertPlaylist = []
-    insertMaster = []
-    if (mPlaylist == None or keyword == None):
-        print("ERROR: one or more inputs to insertDBMaster does not exist")
-        return -1
-    else:
-        pID = abs(hash(keyword)) % (10 ** 8)
-        for song in mPlaylist:
-            #create the hash for the song
-            if (filterBadSongs(song["name"]) == False):
-                songName = song["name"]
-                songArtist = song["artist"]
-                songURL = song["url"]
-                songID = abs(hash(songName+songArtist)) % (10 ** 8)
-                songTuple = (songID, songName, songArtist, songURL)
-                for item in songTuple:
-                    if (item == None):
-                        print("ERROR: one or more fields in songTuple does not exist")
-                        return -1
-                playlistTuple = (pID, songID, keyword)
-                insertPlaylist.append(playlistTuple)
-                insertSongs.append(songTuple)
-       
-        cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
-        conn.commit()
-        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
-        conn.commit()
-        cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
-        conn.commit()
-        cursor.execute("SELECT * FROM masterPlaylist WHERE p_id = " + str(pID) + " AND keyword = " + "'"+keyword+"'" + "length = " + str(len(mPlaylist)))
-        if (cursor.fetchone() == None):
-            print("ERROR: unable to insert Master Playlist entry")
+
 
 def exportSpotify(pID, keyword, username):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -586,29 +662,33 @@ def addToSaved(pid,keyword):
             return -1
         return redirect(url_for('profile')) 
 # This method pre-stores popular tags for emotion, location, and weather  
-#def loadDatabases():
- #   happySongs = getMasterList('happy')
-  #  insertDBMaster(happySongs, 'happy')
-
-   # sadSongs = getMasterList('sad')
-    #insertDBMaster(sadSongs, 'sad')
-
-    #angrySongs = getMasterList('angry')
-    #insertDBMaster(angrySongs, 'angry')
-
-    #nervousSongs = getMasterList('nervous')
-    #insertDBMaster(nervousSongs, 'nervous')
-
-   # scaredSongs = get
-
 
 def init_db():
+    stopDB = True
     db.init_app(app)
     db.app = app
     db.create_all()
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    createPlaylist()
+    if stopDB:
+        loadDatabases()
+        stopDB = False
 
 if (__name__ == "__main__"):
     init_db()
+    try:
+        path = os.path.dirname(os.path.abspath(__file__))
+        conn = sqlite3.connect(path + '/test.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT SQLITE_VERSION() ')
+        data = cursor.fetchone()
+        print "SQLite version: %s" % data 
+    except sqlite3.Error, e:
+        print "Error %s:" % e.args[0]
+        sys.exit(1)
+
     app.secret_key = 'super secret key'
     app.debug = True
     app.run(host='localhost', port=3000)
