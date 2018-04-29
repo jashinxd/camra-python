@@ -345,6 +345,99 @@ def getWeatherSongs(length):
         return -1
     return getSongs(tag, length)
 
+#generate random songs based on a random theme
+def getRandomSongs(length):
+    artists = ["Bob Marley", "Madonna", "The Beatles", "Elvis Presley", 
+                   "Mariah Carey", "Stevie Wonder", "The Rolling Stones", "Paul McCartney",
+                   "Rihanna", "Usher", "Marvin Gaye", "Katy Perry", "Billy Joel", 
+                   "The Beach Boys", "Taylor Swift", "Carpenters", "Beyonce",
+                   "Cher", "Maroon 5", "Bon Jovi", "P!nk", "Ray Charles", "Bruno Mars",
+                   "Chris Brown", "Lady Gaga", "Nelly", "Bobby Darin",
+                   "Paula Abdul", "Alicia Keys", "Kelly Clarkson",
+                   "Destiny's Child", "Eminem", "JAY-Z", "Kanye West", "Justin Timberlake",
+                   "Bruce Springsteen"]
+    currentPopularArtists = ["Cardi B", "Drake", "Imagine Dragons", "Ed Sheeran", 
+                             "The Weeknd", "Post Malone", "Kendrick Lamar", "Nicki Minaj",
+                             "BTS", "Camila Cabello", "Bruno Mars", "Kane Brown", 
+                             "Dua Lipa", "Carrie Underwood", "Maroon 5", "Florida Georgia Line", 
+                             "Pentatonix", "Taylor Swift", "Halsey", "Thomas Rhett", 
+                             "Justin Timberlake", "Demi Lovato", "P!nk", "Blake Shelton",
+                             "Khalid", "Charlie Puth", "Portugal. The Man", "Eminem",
+                             "Rihanna", "Meghan Trainor", "Lil Dicky", "Chris Brown",
+                             "Logic", "Zedd", "Beyonce", "Adele", 
+                             "twenty one pilots", "The Chainsmokers", "Linkin Park", "Justin Bieber",
+                             "Niall Horan", "Sam Hunt", "Sam Smith", "Foster The People",
+                             "DJ Khaled"]
+    instrumentalArtists = ["Chopin", "Beethoven", "Mozart", "Debussy",
+                        "Yiruma", "Vivaldi", "Mahler", "Stravinsky",
+                        "Brian Crain", "Maurice Ravel", "Alex Christensen", "Schiller",
+                        "Juliana", "Rebour", "Oneke", "Elba",
+                        "Charlie Key", "Hushed"]
+    countryArtists = ["Carrie Underwood", "George Strait", "Merle Haggard", "Willie Nelson",
+                      "Alabama", "Alan Jackson", "Tim McGraw", "Buck Owens",
+                      "Johnny Cash", "Kenny Rogers", "Dolly Parton", "Toby Keith"
+                      "Randy Travis", "Ray Price", "Rascal Flatts", "Keith Urban",
+                      "The Judds", "Blake Shelton", "Faith Hill", "Bill Anderson",
+                      "Lynn Anderson", "Charlie Rich", "Connie Smith", "Sugarland",
+                      "Tracy Lawrence", "Sawyer Brown", "Lonestar", "Eric Church",
+                      "Clay Walker", "Miranda Lambert"]
+    selectedPlaylistNum = random.randint(0, 3)
+    if selectedPlaylistNum == 0:
+        artistLength = len(artists)
+        selectedArtist = []
+        selectedArtistSongs = []
+        for x in range(5):
+            selectedArtist.append(random.randint(0, artistLength - 1))
+        if not selectedArtist:
+            print("list is empty")
+        for song in selectedArtist:
+            selectedArtistSongs.extend(getSongs(song, length))
+        if not selectedArtistSongs:
+            print("list is empty")
+        return selectedArtistSongs
+    elif selectedPlaylistNum == 1:
+        popularArtistLength = len(currentPopularArtists)
+        selectedPopularArtist = []
+        selectedPopularArtistSongs = []
+        for x in range(5):
+            selectedPopularArtist.append(random.randint(0, popularArtistLength - 1))
+        if not selectedPopularArtist:
+            print("list is empty")
+        for song in selectedPopularArtist:
+            selectedPopularArtistSongs.extend(getSongs(song, length))
+        if not selectedPopularArtistSongs:
+            print("list is empty")
+        return selectedPopularArtistSongs
+    elif selectedPlaylistNum == 2:
+        instrumentalArtistLength = len(instrumentalArtists)
+        selectedInstrumentalArtist = []
+        selectedInstrumentalArtistSongs = []
+        for x in range(5):
+            selectedInstrumentalArtist.append(random.randint(0, instrumentalArtistLength - 1))
+        if not selectedInstrumentalArtist:
+            print("list is empty")
+        for song in selectedInstrumentalArtist:
+            selectedInstrumentalArtistSongs.extend(getSongs(song, length))
+        if not selectedInstrumentalArtistSongs:
+            print("list is empty")
+        return selectedInstrumentalArtistSongs
+    elif selectedPlaylistNum == 3:
+        countryArtistLength = len(countryArtists)
+        selectedCountryArtist = []
+        selectedCountryArtistSongs = []
+        for x in range(5):
+            selectedCountryArtist.append(random.randint(0, countryArtistLength - 1))
+        if not selectedCountryArtist:
+            print("list is empty")
+        for song in selectedCountryArtist:
+            selectedCountryArtistSongs.extend(getSongs(song, length))
+        if not selectedCountryArtistSongs:
+            print("list is empty")
+        return selectedCountryArtistSongs
+    else:
+        print("error")
+        return -1
+
 def getMasterList(tag):
     songlist = []
     songCounter = 0
