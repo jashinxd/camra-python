@@ -22,24 +22,44 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 def createPlaylist():
-   # conn = sqlite3.connect('test.db',  check_same_thread=False)
-   # cursor = conn.cursor()
+    if (cursor is None):
+        print "error in creating playlist"
     cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer PRIMARY KEY, name text, artist text, url text)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, keyword text, FOREIGN KEY(keyword) REFERENCES masterPlaylist(keyword), FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist integer, p_id integer, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Song'")
+    if (cursor.fetchone() is None):
+        print("error no Song table")
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Playlist'")
+    if (cursor.fetchone() is None):
+        print("error no Playlist table")
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='masterPlaylist'")
+    if (cursor.fetchone() is None):
+        print("error no masterPlaylist table")
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Account'")
+    if (cursor.fetchone() is None):
+        print("error no Account table")
     conn.commit()
 
 try:
     path = os.path.dirname(os.path.abspath(__file__))
+    if (path is None):
+        print ("Wrong file path")
     conn = sqlite3.connect(path + '/test.db')
+    if (conn is None):
+        print ("nonexistant database")
     cursor = conn.cursor()
+    if (cursor is None):
+        print ("error in creating playlist")
     cursor.execute('SELECT SQLITE_VERSION() ')
     data = cursor.fetchone()
+    if (data is None):
+        print ("noDataFetched")
     createPlaylist()
-    print "SQLite version: %s" % data 
+    print ("SQLite version: %s" % data )
 except sqlite3.Error, e:
-    print "Error %s:" % e.args[0]
+    print ("Error %s:" % e.args[0])
     sys.exit(1)
 
 @login_manager.user_loader
@@ -48,15 +68,24 @@ def load_user(username):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    allRequests = []
     length = request.form.get("length")
+    if (length is None):
+        return render_template("index.html")#print on screen that you need a length
     if request.method == "GET":
         return render_template("index.html")
     elif request.method == "POST":
         form = request.form
+        if (form is None):
+            print("No form found")
         category = form["category"]
+        if (category is None):
+            print("No category")
         length = form["length"]
+        if (length is None):
+            print("No length")
         mood = form["moodoption"]
+        if (mood is None):
+            print("No mood")
         songs = []
         if (category == "location"):
             songs = getLocationSongs(length)
@@ -64,6 +93,8 @@ def index():
             songs = getWeatherSongs(length)
         elif (category == "mood"):
             songs = getSongs(mood, length)
+        else:
+            return redirect(url_for('index'))#redirect to 404 screen
         session["output"] = songs
     return redirect(url_for("results"), code = 307)
 
@@ -81,8 +112,14 @@ def viewplaylist():
     else:
         form = request.form
         p_id = form["p_id"]
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
         keyword = form["keyword"]
+        if keyword is None:
+            return redirect(url_for('index'))#404 page
         output = viewPlaylist(p_id)
+        if (output == -1):
+            return redirect(url_for('index'))#404 page
         return render_template('view.html', songs=output, p_id=p_id, keyword=keyword)
     
 @app.route("/export", methods=["GET", "POST"])
@@ -92,8 +129,14 @@ def export():
     else:
         form = request.form
         p_id = form["p_id"]
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
         name = form["pName"]
+        if name is None:
+            return redirect(url_for('index'))#404 page
         username = form["sUsername"]
+        if username is None:
+            return redirect(url_for('index'))#404 page
         return exportSpotify(p_id, name, username)
 
 @app.route("/modify", methods=["GET", "POST"])
@@ -110,7 +153,11 @@ def submitmodify():
     else:
         newoutput = []
         form = request.form
+        if form is None:
+            return redirect(url_for('index'))#404 page
         newlist = form.getlist("songnames")
+        if newlist is None:
+            return redirect(url_for('index'))#404 page
         for song in session["output"]:
             if song["name"] in newlist:
                 newoutput.append(song)
@@ -129,45 +176,91 @@ def profile():
     if request.method == 'GET':
         if (current_user.is_authenticated):
             userPlaylists = getUserPlaylists()
+            if userPlaylists == -1:
+                return redirect(url_for('index'))#404 page
             return render_template('profile.html', userPlaylists=userPlaylists)
         else:
             return redirect(url_for('index'))
     else:
         userPlaylists = getUserPlaylists()
+        if userPlaylists == -1:
+            return redirect(url_for('index'))#404 page
         print(userPlaylists)
         return render_template('profile.html', userPlaylists=userPlaylists)
     
 @app.route('/deleteplaylist', methods=['GET','POST'])
 def deleteplaylist():
     if request.method == 'GET':
-        return render_template('index.html')
+        return redirect(url_for('index.html'))
     if request.method == 'POST':
         p_id = request.form['p_id']
-        deletePlaylist(p_id)
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
+        returnType = deletePlaylist(p_id)
+        if returnType == -1:
+            return redirect(url_for('index'))#404 page
         return redirect(url_for('profile'))
+    else:
+        return -1
 
 @app.route('/deletesongs', methods=['GET','POST'])
 def deletesongs():
     if request.method == 'GET':
-        return render_template('index.html')
+        return redirect(url_for('index.html'))
     if request.method == 'POST':
         form = request.form
+        if form is None:
+            return redirect(url_for('index'))#404 page
         p_id = form["p_id"]
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
         songs = viewPlaylist(p_id)
+        if songs == -1:
+            return redirect(url_for('index'))#404 page
         return render_template('delete.html', songs=songs, p_id=p_id)
 
 @app.route('/addsongs', methods=['GET','POST'])
 def addsongs():
     if request.method == 'GET':
-        return render_template('index.html')
+        return redirect(url_for('index.html'))
     if request.method == 'POST':
         form = request.form
+        if form is None:
+            return redirect(url_for('index'))#404 page
         p_id = form["p_id"]
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
         keyword = form["keyword"]
-        print(p_id)
-        print(keyword)
+        if keyword is None:
+            return redirect(url_for('index'))#404 page
         addToSaved(p_id, keyword)
+        if addToSaved == -1:
+            return redirect(url_for('index'))#404 page
         return redirect(url_for('profile'))
+    else:
+        return -1
+"""
+@app.route('/addsongsfrommaster', methods=['GET','POST'])
+def addsongsfrommaster():
+    if request.method == 'GET':
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        form = request.form
+        if form is None:
+            return redirect(url_for('index'))
+        p_id = form["p_id"]
+        if p_id is None:
+            return redirect(url_for('index'))
+        keyword = form["keyword"]
+        if keyword is None:
+            return redirect(url_for('index'))
+        songsAddedStatus = addSongsToSaved(p_id, keyword)
+        if songsAddedStatus != -1:
+            return redirect(url_for('index'))
+        return redirect(url_for('profile'))
+    else:
+        return -1
+"""
 
 @app.route('/deletesongscommit', methods=['GET','POST'])
 def deletesongscommit():
@@ -175,10 +268,17 @@ def deletesongscommit():
         return render_template('index.html')
     if request.method == 'POST':
         form = request.form
+        if form is None:
+            return redirect(url_for('index'))#404 page
         sid_list = form.getlist("s_id")
-        print(sid_list)
+        if sid_list is None:
+            return redirect(url_for('index'))#404 page
         p_id = form["p_id"]
-        deleteFromSaved(p_id, sid_list)
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
+        response = deleteFromSaved(p_id, sid_list)
+        if response == -1:
+            return redirect(url_for('index'))#404 page
         print(p_id)
         return redirect(url_for('profile'))
 
@@ -188,7 +288,11 @@ def register():
     if request.method == 'GET':
         return render_template('register.html')
     form = request.form
+    if form is None:
+        return redirect(url_for('index'))#404 page
     username = form['username']
+    if username is None:
+        return redirect(url_for('login'))
     password = form['password']
     check = User.query.filter_by(username = username).first()
     if (check is not None):
@@ -197,7 +301,11 @@ def register():
         flash ("This username already exists. Try again", 'error')
         return render_template('register.html', message=message)
     else:
+        if password is None:
+            return redirect(url_for('login'))
         user = User(username, password, 0)
+        if user is None:
+            return redirect(url_for('login'))
         db.session.add(user)
         db.session.commit()
         flash('User successfully registered')
@@ -209,8 +317,10 @@ def login():
         return render_template('login.html')
     username = request.form['username']
     password = request.form['password']
-    print(username)
-    print(password)
+    if username is None:
+        return redirect(url_for('login'))
+    if password is None:
+        return redirect(url_for('login')) 
     registered_user = User.query.filter_by(username=username, password=password).first()
     print(registered_user)
     if registered_user is None:
@@ -231,18 +341,26 @@ def logout():
 def getLocation():
     url = "http://ipinfo.io/"
     results = requests.get(url).json()
+    if results is None:
+        return -1
     city = results["city"]
     return city
 
 #check to make sure that tag isnt null 
 def getLocationSongs(length):
     tag = getLocation()
+    if tag == -1:
+        return -1
     return getSongs(tag, length)
 
 def getWeather():
     city = getLocation()
+    if city == -1:
+        return -1
     url = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&APPID=537eb84d28d1b2075c6e44b37f511b10"
     requested = urllib2.urlopen(url)
+    if requested is None:
+        return -1
     result = requested.read()
     r = json.loads(result)
     weather = r["weather"][0]["main"]
@@ -252,8 +370,9 @@ def getWeather():
 #check to make sure that tag isnt null
 def getWeatherSongs(length):
     tag = getWeather()
+    if tag == -1:
+        return -1
     return getSongs(tag, length)
-
 
 def getSpotifySongs(results):
     if (results != None):
@@ -357,7 +476,6 @@ def getMasterList(tag):
         lastFMSongList = createLastFMSongs(r)
         if (lastFMSongList != -1):
             songlist.extend(lastFMSongList)
-            print("getstoreasnkdsj")
             return songlist
         else:
             return -1
@@ -414,6 +532,8 @@ def deletePlaylist(p_id):
     checkUsers = cursor.fetchone()
     if (checkUsers != None):
         return -1
+    else:
+        return 0
 
 def getRandomSIDs(cursor, tag, length):
     s_id_arr = []
@@ -485,6 +605,9 @@ def getUserPlaylists():
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     username = current_user.username
+    if (cursor == None or username == None):
+        print("ERROR: unable to retrieve information to get user playlists")
+        return -1
     dictList = []
     p_id_arr = []
     keywordList = []
@@ -512,20 +635,35 @@ def getUserPlaylists():
     
 
 def createUserList(cursor, random_s_id):
-    output = []    
-    for s_id in random_s_id:
-        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
-        song = cursor.fetchone()[0]
-        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
-        artist = cursor.fetchone()[0]
-        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
-        url = cursor.fetchone()[0]
-        song_info = {}
-        song_info["name"] = song
-        song_info["artist"] = artist
-        song_info["url"] = url
-        song_info_json = json.loads(json.dumps(song_info))
-        output.append(song_info_json)
+    output = []   
+    if (random_s_id is None or cursor is None):
+        print ("ERROR: one or more input used to createUserList does not exist")
+    else:
+        for s_id in random_s_id:
+            cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+            song = cursor.fetchone()[0]
+            if (song == None):
+                print("ERROR: something went wrong with the retrieval of song name")
+            else:
+                cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+                artist = cursor.fetchone()[0]
+                if (artist == None):
+                    print("ERROR: something went wrong with the retrieval of song artist")
+                else:
+                    cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+                    url = cursor.fetchone()[0]
+                    if (url == None):
+                        print("ERROR: something went wrong with the retrieval of song url")
+                    else:
+                        song_info = {}
+                        song_info["name"] = song
+                        song_info["artist"] = artist
+                        song_info["url"] = url
+                        song_info_json = json.loads(json.dumps(song_info))
+                        output.append(song_info_json)
+        if (output is None):
+            print("ERROR: not able to retrieve the song information of the inputted list")
+            return -1
     return output
 
 def getSongs(tag,length):
@@ -533,17 +671,35 @@ def getSongs(tag,length):
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     cursor.execute("SELECT keyword FROM masterPlaylist WHERE keyword ="+'"'+tag+'"')
-    if (cursor.fetchone() == None):
-        songlist = getMasterList(tag)
-        insertDBMaster(songlist, tag)
-        conn.commit()
-    random_SIDs = getRandomSIDs(cursor, tag, length)
-    if type(random_SIDs) != list:
-        return random_SIDs
-    output = createUserList(cursor, random_SIDs)            
-    session["output"] = output
-    session["keyword"] = tag
-    return output
+    if (tag == None or length == None):
+        print("ERROR: one or more inputs to getSongs does not exist")
+        return -1
+    else:
+        if (cursor.fetchone() == None):
+            songlist = getMasterList(tag)
+            if (songlist == -1):
+                print("ERROR: unable to retrieve Master List")
+                return -1
+            else:
+                ret = insertDBMaster(songlist, tag)
+                if (ret == -1):
+                    print("ERROR: unable to insert into Master")
+                    return -1
+                conn.commit()
+        random_SIDs = getRandomSIDs(cursor, tag, length)
+        if (random_SIDs == -1):
+            print("ERROR: unable to get Random SIDS")
+            return -1
+        if type(random_SIDs) != list:
+            return random_SIDs
+        output = createUserList(cursor, random_SIDs) 
+        if (output == -1):
+            print("ERROR: unable to create User List")
+            return -1
+        else:  
+            session["output"] = output
+            session["keyword"] = tag
+            return output
 
 def insertDBMaster(mPlaylist, keyword):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -552,74 +708,126 @@ def insertDBMaster(mPlaylist, keyword):
     insertSongs = []
     insertPlaylist = []
     insertMaster = []
-    pID = abs(hash(keyword)) % (10 ** 8)
-    for song in mPlaylist:
-        #create the hash for the song
-        if (filterBadSongs(song["name"]) == False):
-            songName = song["name"]
-            songArtist = song["artist"]
-            songURL = song["url"]
-            songID = abs(hash(songName+songArtist)) % (10 ** 8)
-            songTuple = (songID, songName, songArtist, songURL)
-            playlistTuple = (pID, songID, keyword)
-            insertPlaylist.append(playlistTuple)
-            insertSongs.append(songTuple)
-    cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
-    conn.commit()
-    cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
-    conn.commit()
-    #then using that id, create a masterplaylist doc with the same id, and then keyword , and playlist.length() field
-    cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
-    conn.commit()
+    if (mPlaylist == None or keyword == None):
+        print("ERROR: one or more inputs to insertDBMaster does not exist")
+        return -1
+    else:
+        pID = abs(hash(keyword)) % (10 ** 8)
+        for song in mPlaylist:
+            #create the hash for the song
+            if (filterBadSongs(song["name"]) == False):
+                songName = song["name"]
+                songArtist = song["artist"]
+                songURL = song["url"]
+                songID = abs(hash(songName+songArtist)) % (10 ** 8)
+                songTuple = (songID, songName, songArtist, songURL)
+                for item in songTuple:
+                    if (item == None):
+                        print("ERROR: one or more fields in songTuple does not exist")
+                        return -1
+                playlistTuple = (pID, songID, keyword)
+                insertPlaylist.append(playlistTuple)
+                insertSongs.append(songTuple)
+       
+        cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
+        conn.commit()
+        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
+        conn.commit()
+        cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
+        conn.commit()
+        cursor.execute("SELECT * FROM masterPlaylist WHERE p_id = " + str(pID) + " AND keyword = " + "'"+keyword+"'" + "length = " + str(len(mPlaylist)))
+        if (cursor.fetchone() == None):
+            print("ERROR: unable to insert Master Playlist entry")
 
 def exportSpotify(pID, keyword, username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     trackURIs = []
-    for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
-        results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
-        if (results["tracks"]["items"][0] != None):
-            trackURI = results["tracks"]["items"][0]["uri"]
-            trackURIs.append(trackURI)
+    if (pID == None or keyword == None or username == None):
+        print("ERROR: one or more inputs to exportSpotify don't exist")
+        return -1
+    else:
+        for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
+            results = sp.search(q='track:' + row[0] + ' artist:' + row[1], type='track', limit=1)
+            if (results["tracks"]["items"][0] != None):
+                trackURI = results["tracks"]["items"][0]["uri"]
+                trackURIs.append(trackURI)
 
-    scope = 'playlist-modify-private'
-    
-    token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/callback')
-    if token:
-        uSpot = spotipy.Spotify(auth=token)
-        playlist = uSpot.user_playlist_create(username, keyword, public = False)
-        result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
-    return redirect(url_for('profile'))
+        scope = 'playlist-modify-private'
+        
+        token = util.prompt_for_user_token(username, scope = scope, client_id = '0b4d677f62e140ee8532bed91951ae52', client_secret = 'cc1e617a9c064aa982e8eeaf65626a94', redirect_uri = 'http://localhost:3000/callback')
+        if token:
+            uSpot = spotipy.Spotify(auth=token)
+            playlist = uSpot.user_playlist_create(username, keyword, public = False)
+            result = uSpot.user_playlist_add_tracks(username, playlist["id"], trackURIs)
+        else:
+            print("unable to retrieve token")
+            return -1
+        return redirect(url_for('profile'))
 
 def deleteFromSaved(pid, songsToDelete):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-
-    for s_id in songsToDelete:
-        cursor.execute('Delete FROM Playlist WHERE p_id =' + str(pid) + " AND s_id = " + str(s_id))
-        conn.commit()
+    if (pid == None or songsToDelete == None):
+        print("ERROR: one or more inputs to deleteFromSaved does not exist")
+        return -1
+    else:
+        for s_id in songsToDelete:
+            cursor.execute('Delete FROM Playlist WHERE p_id =' + str(pid) + " AND s_id = " + str(s_id))
+            conn.commit()
+            cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(pid) + " AND s_id =" + str(s_id))
+            if (cursor.fetchone() != None):
+                print("ERROR: did not successfully delete song from desired playlist")
+                return -1
     return redirect(url_for('profile')) 
 
 def addToSaved(pid,keyword):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    
-    while (true):
-        cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
-        sid = cursor.fetchone()[0]
-        cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
-        sidCompare = cursor.fetchone()
-        if (sid != sidCompare):
-            playlistT = (pid, sid, keyword)
-            break
+    playlistT = ()
+    if (pid == None or keyword == None or cursor == None):
+        print("ERROR: one or more inputs to addToSaved does not exist")
+        return -1
+    else:
+        while (playlistT == ()):
+            cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+            sids = cursor.fetchall()
+            sid = random.choice(sids)[0]
+            if (sid == None):
+                print("ERROR: relevant sid unable to be found")
+            cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
+            playlistsid = cursor.fetchone()
+            if (playlistsid == None):
+                playlistT = (pid, sid, keyword)
 
-    cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
-    conn.commit()
-    return redirect(url_for('profile')) 
-    
+        cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
+        print("inserting")
+        conn.commit()
+        cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(playlistT[0]) + " AND s_id = " + str(playlistT[1]) + " AND keyword = " +'"'+ str(playlistT[2]) + '"')
+        if (cursor.fetchone() == None):
+            print("ERROR: unable to insert new song into playlist")
+            return -1
+        return redirect(url_for('profile')) 
+# This method pre-stores popular tags for emotion, location, and weather  
+#def loadDatabases():
+ #   happySongs = getMasterList('happy')
+  #  insertDBMaster(happySongs, 'happy')
+
+   # sadSongs = getMasterList('sad')
+    #insertDBMaster(sadSongs, 'sad')
+
+    #angrySongs = getMasterList('angry')
+    #insertDBMaster(angrySongs, 'angry')
+
+    #nervousSongs = getMasterList('nervous')
+    #insertDBMaster(nervousSongs, 'nervous')
+
+   # scaredSongs = get
+
+
 def init_db():
     db.init_app(app)
     db.app = app
