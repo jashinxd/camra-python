@@ -35,5 +35,11 @@
     <input type="hidden" name="keyword" value="{{keyword}}">
     <button type="submit" class="btn btn-primary">Add Song</button>
   </form>
+  <form method="post" action="/addfrommaster">
+    {% for song in songs %}
+    <input type="hidden" name="s_id" value="{{song.s_id}}">
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Choose Songs to Add</button>
+  </form>
 </div>
 {% endblock %}

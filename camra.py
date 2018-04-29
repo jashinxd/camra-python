@@ -389,8 +389,8 @@ def addsongs():
     else:
         return -1
 """
-@app.route('/addsongsfrommaster', methods=['GET','POST'])
-def addsongsfrommaster():
+@app.route('/addfrommaster', methods=['GET','POST'])
+def addfrommaster():
     if request.method == 'GET':
         return redirect(url_for('index'))
     if request.method == 'POST':
@@ -403,7 +403,7 @@ def addsongsfrommaster():
         keyword = form["keyword"]
         if keyword is None:
             return redirect(url_for('index'))
-        songsAddedStatus = addSongsToSaved(p_id, keyword)
+        songsAddedStatus = addMultipleToSaved(p_id, keyword)
         if songsAddedStatus != -1:
             return redirect(url_for('index'))
         return redirect(url_for('profile'))
@@ -411,6 +411,39 @@ def addsongsfrommaster():
         return -1
 """
 
+@app.route('/addfrommaster', methods=["GET", "POST"])
+def addfrommaster():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    if request.method == "POST":
+        form = request.form
+        p_id = form["p_id"]
+        sid_list = form.getlist("s_id")
+        keyword = form["keyword"]
+        songs = loadMasterPlaylist(keyword, sid_list)
+        return render_template('add.html', songs=songs, p_id=p_id, keyword=keyword)
+
+@app.route('/addfrommastercommit', methods=['GET','POST'])
+def addfrommastercommit():
+    if request.method == "GET":
+        return redirect(url_for('index'))
+    if request.method == "POST":
+        form = request.form
+        if form is None:
+            return redirect(url_for('index'))#404 page
+        sid_list = form.getlist("s_id")
+        if sid_list is None:
+            return redirect(url_for('index'))#404 page
+        p_id = form["p_id"]
+        if p_id is None:
+            return redirect(url_for('index'))#404 page
+        keyword = form["keyword"]
+        response = addMultipleToSaved(p_id, keyword, sid_list)
+        if response == -1:
+            return redirect(url_for('index'))#404 page
+        print(p_id)
+        return redirect(url_for('profile'))
+    
 @app.route('/deletesongscommit', methods=['GET','POST'])
 def deletesongscommit():
     if request.method == 'GET':
@@ -987,7 +1020,27 @@ def deleteFromSaved(pid, songsToDelete):
             if (cursor.fetchone() != None):
                 print("ERROR: did not successfully delete song from desired playlist")
                 return -1
-    return redirect(url_for('profile')) 
+    return redirect(url_for('profile'))
+
+def addMultpleToSaved(pid, keyword, songsToAdd):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    if (pid == None or songsToDelete == None):
+        print("ERROR: one or more inputs to addMultipleToSaved does not exist")
+        return -1
+    else:
+        for s_id in songsToAdd:
+            playlistT = (pid, sid, keyword)
+            cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
+            print("inserting")
+            conn.commit()
+            cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(pid) + " AND s_id =" + str(s_id))
+            if (cursor.fetchone() == None):
+                print("ERROR: did not successfully insert song to desired playlist")
+                return -1
+        return redirect(url_for('profile'))
+    
 
 def addToSaved(pid,keyword):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -1016,9 +1069,42 @@ def addToSaved(pid,keyword):
         if (cursor.fetchone() == None):
             print("ERROR: unable to insert new song into playlist")
             return -1
-        return redirect(url_for('profile')) 
-# This method pre-stores popular tags for emotion, location, and weather  
+        return redirect(url_for('profile'))
 
+def loadMasterPlaylist(keyword, currentSIDs):
+    output = []
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+    sids = cursor.fetchall()
+    for sid in sids:
+        if str(sid) not in currentSIDs:
+            cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+            song = cursor.fetchone()
+            if (song != None):
+                song = song[0]
+            cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+            artist = cursor.fetchone()
+            if (artist != None):
+                artist = artist[0]
+            cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+            url = cursor.fetchone()
+            if (url != None):
+                url = url[0]
+            song_info = {}
+            song_info["name"] = song
+            song_info["artist"] = artist
+            song_info["url"] = url
+            song_info["s_id"] = s_id[0]
+            song_info_json = json.loads(json.dumps(song_info))
+            output.append(song_info_json)
+    if (output is None):
+        print("ERROR: not able to retrieve the song information of the inputted list")
+        return -1
+    return output
+    
+# This method pre-stores popular tags for emotion, location, and weather  
 def init_db():
     stopDB = True
     db.init_app(app)
