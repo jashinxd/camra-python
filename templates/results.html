@@ -19,9 +19,15 @@
 {% if current_user.is_authenticated %}
 <div class="container">
   <form method="post" action="/save">
+    {% for song in songs %}
+    <input type="hidden" name="s_id" value="{{song.s_id}}">
+    {% endfor %}
     <button type="submit" class="btn btn-primary">Save Playlist</button>
   </form>
   <form method="post" action="/modify">
+    {% for song in songs %}
+    <input type="hidden" name="s_id" value="{{song.s_id}}">
+    {% endfor %}
     <button type="submit" class="btn btn-primary">Modify Playlist</button>
   </form>
 </div>
