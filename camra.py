@@ -466,45 +466,38 @@ def save():
 
 @app.route('/profile', methods=['GET','POST'])
 def profile():
-    if request.method == 'GET':
-        if (current_user.is_authenticated):
-            weather = getWeather()
-            picURL = ""
-            temp = getTemperature()
-            message = ""
-            if (weather == "Thunderstorm"):
-                message = "It is thunderstorming right now."
-                picURL = "https://banner.kisspng.com/20180316/grw/kisspng-thunderstorm-lightning-weather-clip-art-thunderstorm-cliparts-5aab4faa3b4bc4.2637266215211764902429.jpg"
-            if (weather == "Drizzle"):
-                message = "It is drizzling right now."
-                picURL = "http://clipart-library.com/image_gallery/177131.png"
-            if (weather == "Rain"):
-                message = "It is raining right now."
-                picURL = "http://www.clker.com/cliparts/w/F/h/x/4/3/rain-cloud-hi.png"
-            if (weather == "Snow"):
-                message = "It is snowing right now."
-                picURL = "http://images.clipartpanda.com/snow-clipart-snow-leopard-clipart-830x830.png"
-            if (weather == "Clear"):
-                message = "It is clear right now."
-                picURL = "http://www.clker.com/cliparts/E/m/H/T/6/Z/weather-clear-md.png"
-            if (weather == "Clouds"):
-                message = "It is cloudy right now."
-                picURL = "http://worldartsme.com/images/its-cloudy-clipart-1.jpg"
-            if (weather == "Extreme"):
-                message = "The weather is extreme right now."
-                picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
-            userPlaylists = getUserPlaylists()
-            if userPlaylists == -1:
-                return redirect(url_for('index'))#404 page
-            return render_template('profile.html', userPlaylists=userPlaylists, message=message, picURL = picURL, temp = temp)
-        else:
-            return redirect(url_for('index'))
-    else:
+    if (current_user.is_authenticated):
+        weather = getWeather()
+        picURL = ""
+        temp = getTemperature()
+        message = ""
+        if (weather == "Thunderstorm"):
+            message = "It is thunderstorming right now."
+            picURL = "https://banner.kisspng.com/20180316/grw/kisspng-thunderstorm-lightning-weather-clip-art-thunderstorm-cliparts-5aab4faa3b4bc4.2637266215211764902429.jpg"
+        if (weather == "Drizzle"):
+            message = "It is drizzling right now."
+            picURL = "http://clipart-library.com/image_gallery/177131.png"
+        if (weather == "Rain"):
+            message = "It is raining right now."
+            picURL = "http://www.clker.com/cliparts/w/F/h/x/4/3/rain-cloud-hi.png"
+        if (weather == "Snow"):
+            message = "It is snowing right now."
+            picURL = "http://images.clipartpanda.com/snow-clipart-snow-leopard-clipart-830x830.png"
+        if (weather == "Clear"):
+            message = "It is clear right now."
+            picURL = "http://www.clker.com/cliparts/E/m/H/T/6/Z/weather-clear-md.png"
+        if (weather == "Clouds"):
+            message = "It is cloudy right now."
+            picURL = "http://worldartsme.com/images/its-cloudy-clipart-1.jpg"
+        if (weather == "Extreme"):
+            message = "The weather is extreme right now."
+            picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
         userPlaylists = getUserPlaylists(current_user.username)
         if userPlaylists == -1:
             return redirect(url_for('index'))#404 page
-        print(userPlaylists)
-        return render_template('profile.html', userPlaylists=userPlaylists)
+        return render_template('profile.html', userPlaylists=userPlaylists, message=message, picURL = picURL, temp = temp)
+    else:
+        return redirect(url_for('index'))
 
 @app.route('/addfriendbyusername', methods=['GET', 'POST'])
 def addfriendbyusername():
@@ -518,15 +511,39 @@ def addfriendbyusername():
 
 @app.route('/friendsplaylists', methods=['GET', 'POST'])
 def friendsplaylists():
-    if request.method == 'GET':
-        return redirect(url_for("index"))
-    else:
-        if (current_user.is_authenticated):
-            friendsplaylists = findFriends(current_user.username)
-            return render_template("friends.html", friendsPlaylist=friendsplaylists)
-        if friendsplaylists == -1:
+    if (current_user.is_authenticated):
+        weather = getWeather()
+        picURL = ""
+        temp = getTemperature()
+        message = ""
+        if (weather == "Thunderstorm"):
+            message = "It is thunderstorming right now."
+            picURL = "https://banner.kisspng.com/20180316/grw/kisspng-thunderstorm-lightning-weather-clip-art-thunderstorm-cliparts-5aab4faa3b4bc4.2637266215211764902429.jpg"
+        if (weather == "Drizzle"):
+            message = "It is drizzling right now."
+            picURL = "http://clipart-library.com/image_gallery/177131.png"
+        if (weather == "Rain"):
+            message = "It is raining right now."
+            picURL = "http://www.clker.com/cliparts/w/F/h/x/4/3/rain-cloud-hi.png"
+        if (weather == "Snow"):
+            message = "It is snowing right now."
+            picURL = "http://images.clipartpanda.com/snow-clipart-snow-leopard-clipart-830x830.png"
+        if (weather == "Clear"):
+            message = "It is clear right now."
+            picURL = "http://www.clker.com/cliparts/E/m/H/T/6/Z/weather-clear-md.png"
+        if (weather == "Clouds"):
+            message = "It is cloudy right now."
+            picURL = "http://worldartsme.com/images/its-cloudy-clipart-1.jpg"
+        if (weather == "Extreme"):
+            message = "The weather is extreme right now."
+            picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
+        friendsplaylists = findFriends(current_user.username)
+        if (friendsplaylists == -1):
             return redirect(url_for('index'))#404 page
-    
+        return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp)
+    else:
+        return redirect(url_for('index'))#404 page
+        
 @app.route('/deleteplaylist', methods=['GET','POST'])
 def deleteplaylist():
     if request.method == 'GET':
@@ -1389,7 +1406,7 @@ def findFriends(username):
     friendPlaylist = []
     if (cursor == None):
         print ("ERROR opening cursor to database")
-    cursor.execute("SELECT Friends.friend FROM Friends WHERE username="+username)
+    cursor.execute("SELECT Friends.friend FROM Friends WHERE myUsername="+'"'+username+'"')
     friends = cursor.fetchall()
     for friend in friends:
         friendPlaylist.append(getUserPlaylists(friend[0]))
