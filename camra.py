@@ -74,11 +74,11 @@ def filterUsername(username, password):
         print("generic password. choose something else")
         return -1
     matchingPattern = "0123456789"
-    if ((len(username.find(matchingPattern))) > 3) or ((len(username.find(matchingPattern))) > 3):
+    if (username.find(matchingPattern) > 3) or (username.find(matchingPattern) > 3):
         print("invalid")
         return -1
     matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
-    if ((len(username.find(matchingAlphabetPattern))) > 3) or ((len(username.find(matchingAlphabetPattern))) > 3):
+    if (username.find(matchingAlphabetPattern) > 3) or (username.find(matchingAlphabetPattern) > 3):
         print("invalid")
         return -1
     if (filterBadSongs(username)):
