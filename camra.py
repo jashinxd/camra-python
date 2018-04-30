@@ -76,10 +76,10 @@ def filterUsername(username, password):
     if (username.find(matchingPattern) > 3) or (username.find(matchingPattern) > 3):
         print("invalid")
         return -1
-    matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
-    if (username.find(matchingAlphabetPattern)) or (username.find(matchingAlphabetPattern)):
-        print("invalid")
-        return -1
+   # matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
+    #if (username.find(matchingAlphabetPattern)) or (username.find(matchingAlphabetPattern)):
+     #   print("invalid")
+      #  return -1
     if (filterBadSongs(username)):
         print ("explicit language in username not allowed")
         return -1
@@ -1394,12 +1394,12 @@ def addFriends(username, friendUsername):
     cursor = conn.cursor()
     if (cursor == None):
         print ("ERROR opening cursor to database")
-    rows_count = cursor.execute("SELECT * FROM Friends WHERE friendUsername="+friendUsername)   
+    rows_count = cursor.execute("SELECT * FROM Friends WHERE friend="+'"'+friendUsername+'"')   
     if rows_count == 0:
         print ("No such friend")
         return -1
     else:
-        cursor.execute("INSERT INTO Friends VALUES (?,?)", username, friendUsername)
+        cursor.execute("INSERT INTO Friends VALUES (?,?)", (username, friendUsername))
         friendName = cursor.fetchone()
         if friendName is None:
             return -1
