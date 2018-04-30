@@ -317,7 +317,7 @@ def results():
         category = form["category"]
         if (category is None):
             print("No category")
-        length = form["length"]
+        length = int(form["length"])
         if (length is None):
             print("No length")
         mood = form["moodoption"]
@@ -477,10 +477,35 @@ def save():
 def profile():
     if request.method == 'GET':
         if (current_user.is_authenticated):
+            weather = getWeather()
+            picURL = ""
+            temp = getTemperature()
+            message = ""
+            if (weather == "Thunderstorm"):
+                message = "It is thunderstorming right now."
+                picURL = "https://banner.kisspng.com/20180316/grw/kisspng-thunderstorm-lightning-weather-clip-art-thunderstorm-cliparts-5aab4faa3b4bc4.2637266215211764902429.jpg"
+            if (weather == "Drizzle"):
+                message = "It is drizzling right now."
+                picURL = "http://clipart-library.com/image_gallery/177131.png"
+            if (weather == "Rain"):
+                message = "It is raining right now."
+                picURL = "http://www.clker.com/cliparts/w/F/h/x/4/3/rain-cloud-hi.png"
+            if (weather == "Snow"):
+                message = "It is snowing right now."
+                picURL = "http://images.clipartpanda.com/snow-clipart-snow-leopard-clipart-830x830.png"
+            if (weather == "Clear"):
+                message = "It is clear right now."
+                picURL = "http://www.clker.com/cliparts/E/m/H/T/6/Z/weather-clear-md.png"
+            if (weather == "Clouds"):
+                message = "It is cloudy right now."
+                picURL = "http://worldartsme.com/images/its-cloudy-clipart-1.jpg"
+            if (weather == "Extreme"):
+                message = "The weather is extreme right now."
+                picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
             userPlaylists = getUserPlaylists()
             if userPlaylists == -1:
                 return redirect(url_for('index'))#404 page
-            return render_template('profile.html', userPlaylists=userPlaylists)
+            return render_template('profile.html', userPlaylists=userPlaylists, message=message, picURL = picURL, temp = temp)
         else:
             return redirect(url_for('index'))
     else:
@@ -704,6 +729,23 @@ def getWeather():
     print("weather" + weather)
     return weather
 
+def getTemperature():
+    city = getLocation()
+    apiURL = "http://api.openweathermap.org"
+    units = "units=imperial"
+    API_KEY = "APPID=537eb84d28d1b2075c6e44b37f511b10"
+    if (city == -1):
+        return -1
+    url = apiURL + "/data/2.5/weather?q="+city+"&"+units+"&"+API_KEY
+    requested = urllib2.urlopen(url)
+    if requested is None:
+        return -1
+    result = requested.read()
+    r = json.loads(result)
+    temperature = r["main"]["temp"]
+    intTemp = int(round(temperature))
+    return intTemp
+    
 #check to make sure that tag isnt null
 def getWeatherSongs(length):
     tag = getWeather()
