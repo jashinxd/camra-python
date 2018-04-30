@@ -49,7 +49,8 @@
                     </div>
                 </div>
                 <hr>
-                {% for info in friendsPlaylists %}
+                {% for friend in friendsPlaylist %}
+                {% for info in friend %}
                 <!-- Simple post content example. -->
                 <div class="panel panel-default">
                     <div class="panel-body">
@@ -59,7 +60,7 @@
                             </a>
                         </div>
                         <div class="post-content">
-                            <p style="font-weight: bold;">{{info['keyword']}}</p>
+                            <p style="font-weight: bold;">Friend: {{info['username']}} Category: {{info['keyword']}}</p>
 			     Number of Songs: {{info['length']}} pid: {{info['p_id']}}
 			    <p>
 			    <form method="post" action="/viewplaylist">
@@ -72,6 +73,7 @@
                         </div>
                     </div>
                 </div>
+                {% endfor %}
                 {% endfor %}
             </div>
         </div>

@@ -102,7 +102,7 @@ def createPlaylist():
     cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist integer, p_id integer, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS users (username text, password text, p_id integer, PRIMARY KEY(username, p_id))''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Friends (myUsername text PRIMARY KEY, friend text, FOREIGN KEY(friend) REFERENCES users(username)) ''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Friends (myUsername text, friend text, FOREIGN KEY(friend) REFERENCES users(username), PRIMARY KEY(myUsername, friend)) ''')
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Song'")
     if (cursor.fetchone() is None):
         print("error no Song table")
@@ -1394,19 +1394,19 @@ def addFriends(username, friendUsername):
     cursor = conn.cursor()
     if (cursor == None):
         print ("ERROR opening cursor to database")
-    rows_count = cursor.execute("SELECT * FROM Friends WHERE friend="+'"'+friendUsername+'"')   
+    rows_count = cursor.execute("SELECT * FROM Friends WHERE friend="+'"'+friendUsername+'"') 
+    conn.commit()  
     if rows_count == 0:
         print ("No such friend")
         return -1
     else:
         cursor.execute("INSERT INTO Friends VALUES (?,?)", (username, friendUsername))
-        friendName = cursor.fetchone()
-        if friendName is None:
-            return -1
-        return friendName
+        conn.commit()
+        return friendUsername
 
 def findFriends(username):
     if not username:
+        print ("no username")
         return -1
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
@@ -1417,10 +1417,14 @@ def findFriends(username):
     cursor.execute("SELECT Friends.friend FROM Friends WHERE myUsername="+'"'+username+'"')
     friends = cursor.fetchall()
     if not friends:
+        print("no friends")
         return -1
     for friend in friends:
         newFriend = getUserPlaylists(friend[0])
         friendPlaylist.append(newFriend)
+    conn.commit()
+    print("printing friendplaylist")
+    print(friendPlaylist)
     return friendPlaylist
     
 # This method pre-stores popular tags for emotion, location, and weather  
