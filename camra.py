@@ -74,11 +74,11 @@ def filterUsername(username, password):
         print("generic password. choose something else")
         return -1
     matchingPattern = "0123456789"
-    if ((len(username.find(matchingPattern))) > 3) or ((len(username.find(matchingPattern))) > 3):
+    if (username.find(matchingPattern) > 3) or (username.find(matchingPattern) > 3):
         print("invalid")
         return -1
     matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
-    if ((len(username.find(matchingAlphabetPattern))) > 3) or ((len(username.find(matchingAlphabetPattern))) > 3):
+    if (username.find(matchingAlphabetPattern) > 3) or (username.find(matchingAlphabetPattern) > 3):
         print("invalid")
         return -1
     if (filterBadSongs(username)):
@@ -86,8 +86,6 @@ def filterUsername(username, password):
     if (filterBadSongs(password)):
         print ("explict language in password not allowed")
     
-
-
 def createPlaylist():
     path = os.path.dirname(os.path.abspath(__file__))
     if (path is None):
@@ -139,15 +137,24 @@ def getMasterList(tag):
        
             for tInfo in psongs["items"]:
                 song = {}
-                song["name"] = tInfo["track"]["name"]
-                song["artist"] = tInfo["track"]["artists"][0]["name"]
-                song["url"] = tInfo["track"]["preview_url"]
-                songCounter += 1
-                if (song["url"] != None):
-                  #  print("song: " + tInfo["track"]["name"])
-                  #  print("artist: " + tInfo["track"]["artists"][0]["name"])
-                   # print("url:" + tInfo["track"]["preview_url"])
-                    songlist.append(song)
+                if '-' not in tInfo["track"]["name"]:
+                    if '@' not in tInfo["track"]["name"]:
+                        if '#' not in tInfo["track"]["name"]:
+                            if '$' not in tInfo["track"]["name"]:
+                                if '%' not in tInfo["track"]["name"]:
+                                    if '&' not in tInfo["track"]["name"]: 
+                                        song["name"] = tInfo["track"]["name"]
+                                        if '-' not in tInfo["track"]["artists"][0]["name"]:
+                                            if '@' not in tInfo["track"]["artists"][0]["name"]:
+                                                if '#' not in tInfo["track"]["artists"][0]["name"]:
+                                                    if '$' not in tInfo["track"]["artists"][0]["name"]:
+                                                        if '%' not in tInfo["track"]["artists"][0]["name"]:
+                                                            if '&' not in tInfo["track"]["artists"][0]["name"]: 
+                                                                song["artist"] = tInfo["track"]["artists"][0]["name"]
+                                                                song["url"] = tInfo["track"]["preview_url"]
+                                                                songCounter += 1
+                                                                if (song["url"] != None):
+                                                                    songlist.append(song)
 
         
     print("before this last fm")
@@ -224,72 +231,52 @@ def loadDatabases():
     print("enter")
     happySongs = getMasterList('happy')
     insertDBMaster(happySongs, 'happy')
-
     print("happy")
-
     sadSongs = getMasterList('sad')
     insertDBMaster(sadSongs, 'sad')
-
     print("sad")
-
     angrySongs = getMasterList('angry')
     insertDBMaster(angrySongs, 'angry')
-
     print("angry")
-
     nervousSongs = getMasterList('nervous')
     insertDBMaster(nervousSongs, 'nervous')
-
     print("nervous")
-
     scaredSongs = getMasterList('scared')
     insertDBMaster(scaredSongs, 'scared')
     print("scared")
-
     thunderstorm = getMasterList("Thunderstorm")
     insertDBMaster(thunderstorm, 'Thunderstorm')
     print("thunder")
-
     drizzle = getMasterList("Drizzle")
     insertDBMaster(drizzle, 'Drizzle')
     print("drizz")
-
     rain = getMasterList("Rain")
     insertDBMaster(rain, 'Rain')
     print("rain")
-
     snow = getMasterList("Snow")
     insertDBMaster(snow, 'Snow')
     print("snow")
-
     clear = getMasterList("Clear")
     insertDBMaster(clear, 'Clear')
     print("clear")
-
     clouds = getMasterList("Clouds")
     insertDBMaster(clouds, 'Clouds')
     print("cloud")
-
     extreme = getMasterList("Extreme")
     insertDBMaster(extreme, 'Extreme')
     print("extreme")
-
     boston = getMasterList("Boston")
     insertDBMaster(boston, 'Boston')
     print("bost")
-
     washingtonDC = getMasterList("Washington DC")
     insertDBMaster(washingtonDC, 'Washington DC')
     print("dc")
-
     LA = getMasterList("Los Angeles")
     insertDBMaster(LA, 'Los Angeles')
     print("la")
-
     seattle = getMasterList("Seattle")
     insertDBMaster(seattle, 'Seattle')
     print("seat")
-
     columbus = getMasterList("Columbus")
     insertDBMaster(columbus, 'Columbus')
     print("col")
@@ -804,7 +791,10 @@ def createLastFMSongs(r):
         songlist = []
         for song in r["tracks"]["track"]:
             if (song != None):
-                results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+                try:
+                    results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+                except spotipy.client.SpotifyException, e:
+                    continue
                 if (results["tracks"]["items"] != []):
                     Nsong = {}
                     if (song["name"] != None):
@@ -1381,8 +1371,7 @@ def loadMasterPlaylist(keyword, currentSIDs):
     return output
     
 # This method pre-stores popular tags for emotion, location, and weather  
-def init_db():
-    
+def init_db(): 
     db.init_app(app)
     db.app = app
     db.create_all()
