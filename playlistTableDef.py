@@ -10,7 +10,7 @@ engine = create_engine('sqlite:///test.db', echo=True)
 Base = declarative_base()
  
 ########################################################################
-class User(Base):     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, keyword text, FOREIGN KEY(keyword) REFERENCES masterPlaylist(keyword), FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
+class User(Base):     
 
     """"""
     __tablename__ = "Playlist"

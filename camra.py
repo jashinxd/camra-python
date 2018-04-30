@@ -21,6 +21,72 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+def filterUsername(username, password):
+    if not username:
+        print ("no username")
+        return -1
+    if not password:
+        print ("no password")
+        return -1
+    if (len(username) < 4) or (len(password) < 4):
+        print ("too short")
+        return -1
+    if (len(username) > 15) or (len(password) > 15):
+        print ("too long")
+        return -1
+    if ("~" in username) or ("~" in password):
+        print("no special characters allowed: ~")
+        return -1
+    if ("!" in username) or ("!" in password):
+        print("no special characters allowed: !")
+        return -1
+    if ("@" in username) or ("@" in password):
+        print("no special characters allowed: @")
+        return -1
+    if ("#" in username) or ("#" in password):
+        print("no special characters allowed: #")
+        return -1
+    if ("$" in username) or ("$" in password):
+        print("no special characters allowed: $")
+        return -1
+    if ("%" in username) or ("%" in password):
+        print("no special characters allowed: %")
+        return -1
+    if ("^" in username) or ("^" in password):
+        print("no special characters allowed: ^")
+        return -1
+    if ("&" in username) or ("&" in password):
+        print("no special characters allowed: &")
+        return -1
+    if ("*" in username) or ("*" in password):
+        print("no special characters allowed: *")
+        return -1
+    if ("(" in username) or ("(" in password):
+        print("no special characters allowed: (")
+        return -1
+    if (")" in username) or (")" in password):
+        print("no special characters allowed: )")
+        return -1
+    if (username is "username") or (username is "password"):
+        print("generic username. choose something else")
+        return -1
+    if (password is "username") or (password is "password"):
+        print("generic password. choose something else")
+        return -1
+    matchingPattern = "0123456789"
+    if ((len(username.find(matchingPattern))) > 3) or ((len(username.find(matchingPattern))) > 3):
+        print("invalid")
+        return -1
+    matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
+    if ((len(username.find(matchingAlphabetPattern))) > 3) or ((len(username.find(matchingAlphabetPattern))) > 3):
+        print("invalid")
+        return -1
+    if (filterBadSongs(username)):
+        print ("explicit language in username not allowed")
+    if (filterBadSongs(password)):
+        print ("explict language in password not allowed")
+    
+
 
 def createPlaylist():
     if (cursor is None):
@@ -476,6 +542,8 @@ def register():
     if username is None:
         return redirect(url_for('login'))
     password = form['password']
+    if filterUsername(username, password) == -1:
+        return redirect(url_for('login'))
     check = User.query.filter_by(username = username).first()
     if (check is not None):
         print("in here!")
@@ -1022,7 +1090,7 @@ def deleteFromSaved(pid, songsToDelete):
                 return -1
     return redirect(url_for('profile'))
 
-def addMultpleToSaved(pid, keyword, songsToAdd):
+def addMultipleToSaved(pid, keyword, songsToAdd):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
@@ -1078,8 +1146,8 @@ def loadMasterPlaylist(keyword, currentSIDs):
     cursor = conn.cursor()
     cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
     sids = cursor.fetchall()
-    for sid in sids:
-        if str(sid) not in currentSIDs:
+    for s_id in sids:
+        if str(s_id) not in currentSIDs:
             cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
             song = cursor.fetchone()
             if (song != None):
