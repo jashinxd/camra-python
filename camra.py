@@ -330,6 +330,8 @@ def results():
             songs = getWeatherSongs(length)
         elif (category == "mood"):
             songs = getSongs(mood, length)
+        elif (category == "random"):
+            songs = getRandomSongs(length)
         else:
             return redirect(url_for('index'))#redirect to 404 screen
         return render_template('results.html', songs=songs)        
@@ -711,6 +713,7 @@ def getWeatherSongs(length):
 
 def getSpotifySongs(results):
     if (results != None):
+        psongs = {}
         for playlist in results["playlists"]["items"]:
             if (playlist["id"] != None):
                 playlistid = playlist["id"]
@@ -825,54 +828,74 @@ def getRandomSongs(length):
         artistLength = len(artists)
         selectedArtist = []
         selectedArtistSongs = []
+        finalArray0 = []
         for x in range(5):
-            selectedArtist.append(random.randint(0, artistLength - 1))
+            selectedArtist.append(artists[random.randint(0, artistLength - 1)])
         if not selectedArtist:
             print("list is empty")
         for song in selectedArtist:
+            print(song)
             selectedArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedArtistSongs)
+            finalArray0.append(selectedArtistSongs[random.randint(0, finalLength -1 )])
         if not selectedArtistSongs:
             print("list is empty")
-        return selectedArtistSongs
+        return finalArray0
     elif selectedPlaylistNum == 1:
         popularArtistLength = len(currentPopularArtists)
         selectedPopularArtist = []
         selectedPopularArtistSongs = []
+        finalArray1 = []
         for x in range(5):
-            selectedPopularArtist.append(random.randint(0, popularArtistLength - 1))
+            selectedPopularArtist.append(currentPopularArtists[random.randint(0, popularArtistLength - 1)])
         if not selectedPopularArtist:
             print("list is empty")
         for song in selectedPopularArtist:
+            print(song)
             selectedPopularArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedPopularArtistSongs)
+            finalArray1.append(selectedPopularArtistSongs[random.randint(0, finalLength -1 )])
         if not selectedPopularArtistSongs:
             print("list is empty")
-        return selectedPopularArtistSongs
+        return finalArray1
     elif selectedPlaylistNum == 2:
         instrumentalArtistLength = len(instrumentalArtists)
         selectedInstrumentalArtist = []
         selectedInstrumentalArtistSongs = []
+        finalArray = []
         for x in range(5):
-            selectedInstrumentalArtist.append(random.randint(0, instrumentalArtistLength - 1))
+            selectedInstrumentalArtist.append(instrumentalArtists[random.randint(0, instrumentalArtistLength - 1)])
         if not selectedInstrumentalArtist:
             print("list is empty")
         for song in selectedInstrumentalArtist:
+            print(song)
             selectedInstrumentalArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedInstrumentalArtistSongs)
+            finalArray.append(selectedInstrumentalArtistSongs[random.randint(0, finalLength -1 )])
         if not selectedInstrumentalArtistSongs:
             print("list is empty")
-        return selectedInstrumentalArtistSongs
+        return finalArray
     elif selectedPlaylistNum == 3:
         countryArtistLength = len(countryArtists)
         selectedCountryArtist = []
         selectedCountryArtistSongs = []
+        finalArray = []
         for x in range(5):
-            selectedCountryArtist.append(random.randint(0, countryArtistLength - 1))
+            selectedCountryArtist.append(countryArtists[random.randint(0, countryArtistLength - 1)])
         if not selectedCountryArtist:
             print("list is empty")
         for song in selectedCountryArtist:
+            print(song)
             selectedCountryArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedCountryArtistSongs)
+            finalArray.append(selectedCountryArtistSongs[random.randint(0, finalLength -1 )])
         if not selectedCountryArtistSongs:
             print("list is empty")
-        return selectedCountryArtistSongs
+        return finalArray
     else:
         print("error")
         return -1
