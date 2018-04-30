@@ -81,8 +81,6 @@ class Tests(unittest.TestCase):
         result = censorFilteredWords(None)
         self.assertEqual(result, True)
 
-    def 
-    
 
     #def test_getLocationSongs(self):
     #    result = getLocationSongs()
