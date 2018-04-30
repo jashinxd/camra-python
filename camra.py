@@ -86,8 +86,6 @@ def filterUsername(username, password):
     if (filterBadSongs(password)):
         print ("explict language in password not allowed")
     
-
-
 def createPlaylist():
     path = os.path.dirname(os.path.abspath(__file__))
     if (path is None):
@@ -224,72 +222,52 @@ def loadDatabases():
     print("enter")
     happySongs = getMasterList('happy')
     insertDBMaster(happySongs, 'happy')
-
     print("happy")
-
     sadSongs = getMasterList('sad')
     insertDBMaster(sadSongs, 'sad')
-
     print("sad")
-
     angrySongs = getMasterList('angry')
     insertDBMaster(angrySongs, 'angry')
-
     print("angry")
-
     nervousSongs = getMasterList('nervous')
     insertDBMaster(nervousSongs, 'nervous')
-
     print("nervous")
-
     scaredSongs = getMasterList('scared')
     insertDBMaster(scaredSongs, 'scared')
     print("scared")
-
     thunderstorm = getMasterList("Thunderstorm")
     insertDBMaster(thunderstorm, 'Thunderstorm')
     print("thunder")
-
     drizzle = getMasterList("Drizzle")
     insertDBMaster(drizzle, 'Drizzle')
     print("drizz")
-
     rain = getMasterList("Rain")
     insertDBMaster(rain, 'Rain')
     print("rain")
-
     snow = getMasterList("Snow")
     insertDBMaster(snow, 'Snow')
     print("snow")
-
     clear = getMasterList("Clear")
     insertDBMaster(clear, 'Clear')
     print("clear")
-
     clouds = getMasterList("Clouds")
     insertDBMaster(clouds, 'Clouds')
     print("cloud")
-
     extreme = getMasterList("Extreme")
     insertDBMaster(extreme, 'Extreme')
     print("extreme")
-
     boston = getMasterList("Boston")
     insertDBMaster(boston, 'Boston')
     print("bost")
-
     washingtonDC = getMasterList("Washington DC")
     insertDBMaster(washingtonDC, 'Washington DC')
     print("dc")
-
     LA = getMasterList("Los Angeles")
     insertDBMaster(LA, 'Los Angeles')
     print("la")
-
     seattle = getMasterList("Seattle")
     insertDBMaster(seattle, 'Seattle')
     print("seat")
-
     columbus = getMasterList("Columbus")
     insertDBMaster(columbus, 'Columbus')
     print("col")
@@ -1316,8 +1294,7 @@ def loadMasterPlaylist(keyword, currentSIDs):
     return output
     
 # This method pre-stores popular tags for emotion, location, and weather  
-def init_db():
-    
+def init_db(): 
     db.init_app(app)
     db.app = app
     db.create_all()
