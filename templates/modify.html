@@ -9,7 +9,7 @@
 
 <form method="post" action="/submitmodify">
   {% for song in songs %} 
-  <input type="checkbox" name="songnames" value="{{song.name}}" checked>
+  <input type="checkbox" name="s_id" value="{{song.s_id}}" checked>
   <div class="container">
     <h3>{{song.name}} by {{song.artist}}</h3> 
     <audio controls="controls" id="audio_player"> 

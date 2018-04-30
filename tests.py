@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # -*- coding: utf-8 -*-
 from app import app
 import camra
@@ -85,7 +86,3 @@ class Tests(unittest.TestCase):
     #def test_getLocationSongs(self):
     #    result = getLocationSongs()
     #    self.assertIsInstance(result, basestring)
-        
-        
-if __name__ == '__main__':
-        unittest.main()
