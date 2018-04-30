@@ -578,28 +578,6 @@ def addsongs():
         return redirect(url_for('profile'))
     else:
         return -1
-"""
-@app.route('/addfrommaster', methods=['GET','POST'])
-def addfrommaster():
-    if request.method == 'GET':
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        form = request.form
-        if form is None:
-            return redirect(url_for('index'))
-        p_id = form["p_id"]
-        if p_id is None:
-            return redirect(url_for('index'))
-        keyword = form["keyword"]
-        if keyword is None:
-            return redirect(url_for('index'))
-        songsAddedStatus = addMultipleToSaved(p_id, keyword)
-        if songsAddedStatus != -1:
-            return redirect(url_for('index'))
-        return redirect(url_for('profile'))
-    else:
-        return -1
-"""
 
 @app.route('/addfrommaster', methods=["GET", "POST"])
 def addfrommaster():
