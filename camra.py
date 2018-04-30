@@ -139,15 +139,24 @@ def getMasterList(tag):
        
             for tInfo in psongs["items"]:
                 song = {}
-                song["name"] = tInfo["track"]["name"]
-                song["artist"] = tInfo["track"]["artists"][0]["name"]
-                song["url"] = tInfo["track"]["preview_url"]
-                songCounter += 1
-                if (song["url"] != None):
-                  #  print("song: " + tInfo["track"]["name"])
-                  #  print("artist: " + tInfo["track"]["artists"][0]["name"])
-                   # print("url:" + tInfo["track"]["preview_url"])
-                    songlist.append(song)
+                if '-' not in tInfo["track"]["name"]:
+                    if '@' not in tInfo["track"]["name"]:
+                        if '#' not in tInfo["track"]["name"]:
+                            if '$' not in tInfo["track"]["name"]:
+                                if '%' not in tInfo["track"]["name"]:
+                                    if '&' not in tInfo["track"]["name"]: 
+                                        song["name"] = tInfo["track"]["name"]
+                                        if '-' not in tInfo["track"]["artists"][0]["name"]:
+                                            if '@' not in tInfo["track"]["artists"][0]["name"]:
+                                                if '#' not in tInfo["track"]["artists"][0]["name"]:
+                                                    if '$' not in tInfo["track"]["artists"][0]["name"]:
+                                                        if '%' not in tInfo["track"]["artists"][0]["name"]:
+                                                            if '&' not in tInfo["track"]["artists"][0]["name"]: 
+                                                                song["artist"] = tInfo["track"]["artists"][0]["name"]
+                                                                song["url"] = tInfo["track"]["preview_url"]
+                                                                songCounter += 1
+                                                                if (song["url"] != None):
+                                                                    songlist.append(song)
 
         
     print("before this last fm")
@@ -317,7 +326,7 @@ def results():
         category = form["category"]
         if (category is None):
             print("No category")
-        length = form["length"]
+        length = int(form["length"])
         if (length is None):
             print("No length")
         mood = form["moodoption"]
@@ -762,7 +771,10 @@ def createLastFMSongs(r):
         songlist = []
         for song in r["tracks"]["track"]:
             if (song != None):
-                results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+                try:
+                    results = sp.search(q='track:' + song["name"] + ' artist:' + song["artist"]["name"], type='track', limit=1)
+                except spotipy.client.SpotifyException, e:
+                    continue
                 if (results["tracks"]["items"] != []):
                     Nsong = {}
                     if (song["name"] != None):
