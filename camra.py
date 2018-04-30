@@ -1377,11 +1377,16 @@ def addFriends(username, friendUsername):
     cursor = conn.cursor()
     if (cursor == None):
         print ("ERROR opening cursor to database")
-    cursor.execute("INSERT INTO Friends VALUES (?,?)", username, friendUsername)
-    friendName = cursor.fetchone()
-    if friendName is None:
+    rows_count = cursor.execute("SELECT * FROM Friends WHERE friendUsername="+friendUsername)   
+    if rows_count == 0:
+        print ("No such friend")
         return -1
-    return friendName
+    else:
+        cursor.execute("INSERT INTO Friends VALUES (?,?)", username, friendUsername)
+        friendName = cursor.fetchone()
+        if friendName is None:
+            return -1
+        return friendName
 
 def findFriends(username):
     if not username:
