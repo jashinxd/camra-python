@@ -89,6 +89,9 @@ def filterUsername(username, password):
 
 
 def createPlaylist():
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
     if (cursor is None):
         print "error in creating playlist"
     cursor.execute('''CREATE TABLE IF NOT EXISTS Song (s_id integer PRIMARY KEY, name text, artist text, url text)''')
@@ -115,10 +118,12 @@ def getMasterList(tag):
     sOffset = 0
     
     while (songCounter < 200):
+        print("fack u")
         results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
 
         for playlist in results["playlists"]["items"]:
             playlistid = playlist["id"]
+            print(playlist["owner"]["id"])
             if (',' not in playlist["owner"]["id"]):
                 playlistuser = playlist["owner"]["id"]
                 print(playlistuser)
@@ -193,9 +198,9 @@ def insertDBMaster(mPlaylist, keyword):
        
         cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
         conn.commit()
-        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
+        cursor.executemany("INSERT OR REPLACE INTO Playlist VALUES (?,?,?)", insertPlaylist)
         conn.commit()
-        cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
+        cursor.execute("INSERT OR REPLACE INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
         conn.commit()
         print(keyword) # something wrong here
         cursor.execute("SELECT * FROM masterPlaylist WHERE mp_id = " + str(pID) + " AND keyword = " + "'"+ keyword +"'" + " AND length = " + str(len(mPlaylist)))
@@ -203,7 +208,7 @@ def insertDBMaster(mPlaylist, keyword):
             print("ERROR: unable to insert Master Playlist entry")
 
 def loadDatabases():
-    
+    print("enter")
     happySongs = getMasterList('happy')
     insertDBMaster(happySongs, 'happy')
 
@@ -631,10 +636,10 @@ def getSpotifySongs(results):
                 playlistid = playlist["id"]
             else:
                 playlistid = "PlaylistID does not exist"
-            if (playlist["owner"]["id"] != None):
+            if (playlist["owner"]["id"] != None and ',' not in playlist["owner"]["id"]):
                 playlistuser = playlist["owner"]["id"]
             else:
-                playlistuser = "PlaylistUser does not exist"
+                continue
             if ((playlistid != "PlaylistID does not exist") and (playlistid != "PlaylistUser does not exist")):
                 psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
             else:
@@ -661,9 +666,9 @@ def createSpotifySongObjects(psongs):
             else:
                 song["url"] = "No URL Exists"
             if (song["url"] != "No URL Exists"):
-                print("song: " + tInfo["track"]["name"])
-                print("artist: " + tInfo["track"]["artists"][0]["name"])
-                print("url:" + tInfo["track"]["preview_url"])
+               # print("song: " + tInfo["track"]["name"])
+               # print("artist: " + tInfo["track"]["artists"][0]["name"])
+               # print("url:" + tInfo["track"]["preview_url"])
                 songlist.append(song)
         return songlist
     else:
@@ -689,11 +694,11 @@ def createLastFMSongs(r):
                         Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
                     else:
                         Nsong["url"] = "URL Does Not Exist"
-                        print("url does not exist")
+                      #  print("url does not exist")
                     if ((Nsong["name"] != "Name Does Not Exist") and
                         (Nsong["artist"] != "Artist Does Not Exist") and
                         (Nsong["url"] != "URL Does Not Exist")):
-                        print("everything ok")
+                      #  print("everything ok")
                         songlist.append(Nsong)
         return songlist
     else:
@@ -1174,26 +1179,25 @@ def loadMasterPlaylist(keyword, currentSIDs):
     
 # This method pre-stores popular tags for emotion, location, and weather  
 def init_db():
-    stopDB = True
+    
     db.init_app(app)
     db.app = app
     db.create_all()
-    path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + '/test.db')
-    cursor = conn.cursor()
-    createPlaylist()
-    if stopDB:
-        loadDatabases()
-        stopDB = False
+   
 
 if (__name__ == "__main__"):
     init_db()
     try:
+        stopDB = True
         path = os.path.dirname(os.path.abspath(__file__))
         conn = sqlite3.connect(path + '/test.db')
         cursor = conn.cursor()
         cursor.execute('SELECT SQLITE_VERSION() ')
         data = cursor.fetchone()
+        createPlaylist()
+        if stopDB:
+            loadDatabases()
+            stopDB = False
         print "SQLite version: %s" % data 
     except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
