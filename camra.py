@@ -1099,12 +1099,12 @@ def addMultipleToSaved(pid, keyword, songsToAdd):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    if (pid == None or songsToDelete == None):
+    if (pid == None or songsToAdd == None):
         print("ERROR: one or more inputs to addMultipleToSaved does not exist")
         return -1
     else:
         for s_id in songsToAdd:
-            playlistT = (pid, sid, keyword)
+            playlistT = (pid, s_id, keyword)
             cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
             print("inserting")
             conn.commit()
