@@ -17,7 +17,6 @@ sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 db = SQLAlchemy(app)
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -78,7 +77,7 @@ def filterUsername(username, password):
         print("invalid")
         return -1
     matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
-    if (username.find(matchingAlphabetPattern) > 3) or (username.find(matchingAlphabetPattern) > 3):
+    if (username.find(matchingAlphabetPattern)) or (username.find(matchingAlphabetPattern)):
         print("invalid")
         return -1
     if (filterBadSongs(username)):
@@ -122,11 +121,9 @@ def getMasterList(tag):
     songlist = []
     songCounter = 0
     sOffset = 0
-    
     while (songCounter < 200):
         print("fack u")
         results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
-
         for playlist in results["playlists"]["items"]:
             playlistid = playlist["id"]
             print(playlist["owner"]["id"])
@@ -138,7 +135,6 @@ def getMasterList(tag):
                 psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
             else:
                 continue
-       
             for tInfo in psongs["items"]:
                 song = {}
                 if '-' not in tInfo["track"]["name"]:
@@ -160,7 +156,6 @@ def getMasterList(tag):
                                                                 if (song["url"] != None):
                                                                     songlist.append(song)
 
-        
     print("before this last fm")
     url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + tag + "&api_key=eaa991e4c471a7135879ba14652fcbe5&format=json&limit=200"
     requested = urllib2.urlopen(url)
@@ -493,7 +488,7 @@ def profile():
             if (weather == "Extreme"):
                 message = "The weather is extreme right now."
                 picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
-            userPlaylists = getUserPlaylists()
+            userPlaylists = getUserPlaylists(current_user.username)
             if userPlaylists == -1:
                 return redirect(url_for('index'))#404 page
             return render_template('profile.html', userPlaylists=userPlaylists, message=message, picURL = picURL, temp = temp)
@@ -1373,6 +1368,10 @@ def loadMasterPlaylist(keyword, currentSIDs):
     return output
 
 def addFriends(username, friendUsername):
+    if not username:
+        return -1
+    if not friendUsername:
+        return -1
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
@@ -1380,19 +1379,26 @@ def addFriends(username, friendUsername):
         print ("ERROR opening cursor to database")
     cursor.execute("INSERT INTO Friends VALUES (?,?)", username, friendUsername)
     friendName = cursor.fetchone()
+    if friendName is None:
+        return -1
     return friendName
 
 def findFriends(username):
+    if not username:
+        return -1
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     friendPlaylist = []
     if (cursor == None):
         print ("ERROR opening cursor to database")
-    cursor.execute("SELECT Friends.friend FROM Friends WHERE username="+username)
+    cursor.execute("SELECT Friends.friend FROM Friends WHERE myUsername="+username)
     friends = cursor.fetchall()
+    if not friends:
+        return -1
     for friend in friends:
-        friendPlaylist.append(getUserPlaylists(friend[0]))
+        newFriend = getUserPlaylists(friend[0])
+        friendPlaylist.append(newFriend)
     return friendPlaylist
     
 # This method pre-stores popular tags for emotion, location, and weather  
@@ -1422,7 +1428,6 @@ if (__name__ == "__main__"):
     except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
-
     app.secret_key = 'super secret key'
     app.debug = True
     app.run(host='localhost', port=3000)

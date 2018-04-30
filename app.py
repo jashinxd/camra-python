@@ -401,7 +401,6 @@ def getUserPlaylists():
     print(dictList)
     return dictList
     
-
 def createUserList(cursor, random_s_id):
     output = []    
     for s_id in random_s_id:
