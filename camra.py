@@ -95,6 +95,10 @@ def getMasterList(tag):
                 Nsong["artist"] = song["artist"]["name"]
                 Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
                 songlist.append(Nsong)
+            else:
+                print("WARNING: track has no preview")
+        else:
+            print("ERROR: no results")
     return songlist
 
 def insertDBMaster(mPlaylist, keyword):
@@ -106,11 +110,16 @@ def insertDBMaster(mPlaylist, keyword):
     if (conn is None):
         print ("nonexistant database")
     cursor = conn.cursor()
+    if (cursor == None):
+         print ("ERROR opening cursor to database")
     insertSongs = []
     insertPlaylist = []
     insertMaster = []
-    if (mPlaylist == None or keyword == None):
-        print("ERROR: one or more inputs to insertDBMaster does not exist")
+    if (mPlaylist == None):
+        print("ERROR: playlist to insertDBMaster does not exist")
+        return -1
+    if (keyword == None):
+        print("ERROR: keyword to insertDBMaster does not exist")
         return -1
     else:
         pID = abs(hash(keyword)) % (10 ** 8)
@@ -766,6 +775,8 @@ def viewPlaylist(p_id):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     songList = []
     s_id_arr = []
     cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+p_id)
@@ -779,14 +790,20 @@ def viewPlaylist(p_id):
         song = cursor.fetchone()
         if (song != None):
             song = song[0]
+        else:
+            print("Couldn't retrieve song")
         cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
         artist = cursor.fetchone()
         if (artist != None):
             artist = artist[0]
+        else:
+            print("Couldn't retrieve artist")
         cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
         url = cursor.fetchone()
         if (url != None):
             url = url[0]
+        else:
+            print("Couldn't retrieve url")
         song_info = {}
         song_info["name"] = song
         song_info["artist"] = artist
@@ -800,6 +817,8 @@ def deletePlaylist(p_id):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     if current_user.is_authenticated:
         cursor.execute("DELETE FROM Playlist WHERE p_id ="+p_id)
         cursor.execute("DELETE FROM users WHERE p_id = "+p_id)
@@ -839,6 +858,8 @@ def insertUserPlaylist():
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     if current_user.is_authenticated:
         username = current_user.username
         if (username == None):
@@ -884,9 +905,14 @@ def getUserPlaylists():
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     username = current_user.username
-    if (cursor == None or username == None):
-        print("ERROR: unable to retrieve information to get user playlists")
+    if (cursor == None):
+        print("ERROR: unable to retrieve DB info")
+        return -1
+    if (username == None):
+        print("ERROR: unable to retrieve username to get user playlists")
         return -1
     dictList = []
     p_id_arr = []
@@ -921,17 +947,20 @@ def createUserList(cursor, random_s_id):
     else:
         for s_id in random_s_id:
             cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
-            song = cursor.fetchone()[0]
+            song = cursor.fetchone()
+            song = song[0]
             if (song == None):
                 print("ERROR: something went wrong with the retrieval of song name")
             else:
                 cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
-                artist = cursor.fetchone()[0]
+                artist = cursor.fetchone()
+                artist = artist[0]
                 if (artist == None):
                     print("ERROR: something went wrong with the retrieval of song artist")
                 else:
                     cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
-                    url = cursor.fetchone()[0]
+                    url = cursor.fetchone()
+                    url = url[0]
                     if (url == None):
                         print("ERROR: something went wrong with the retrieval of song url")
                     else:
@@ -950,9 +979,14 @@ def getSongs(tag,length):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     cursor.execute("SELECT keyword FROM masterPlaylist WHERE keyword ="+'"'+tag+'"')
-    if (tag == None or length == None):
-        print("ERROR: one or more inputs to getSongs does not exist")
+    if (tag == None):
+        print("ERROR: tag to getSongs does not exist")
+        return -1
+    if (length == None):
+        print("ERROR: no length specified")
         return -1
     else:
         if (cursor.fetchone() == None):
@@ -987,9 +1021,17 @@ def exportSpotify(pID, keyword, username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     trackURIs = []
-    if (pID == None or keyword == None or username == None):
-        print("ERROR: one or more inputs to exportSpotify don't exist")
+    if (pID == None):
+        print("ERROR: playlist id to export doesn't exist")
+        return -1
+    if (keyword == None):
+        print("ERROR: keyword of exporting playlist doesn't exist")
+        return -1
+    if (username == None):
+        print("ERROR: Spotify username doesn't exist")
         return -1
     else:
         for row in cursor.execute("Select Song.name, Song.artist FROM Song, Playlist WHERE Playlist.s_id = Song.s_id AND Playlist.p_id = " + str(pID)):
@@ -1014,8 +1056,13 @@ def deleteFromSaved(pid, songsToDelete):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    if (pid == None or songsToDelete == None):
-        print("ERROR: one or more inputs to deleteFromSaved does not exist")
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
+    if (pid == None):
+        print("ERROR: pid to deleteFromSaved does not exist")
+        return -1
+    if (songsToDelete == None):
+        print("ERROR: songs to deleteFromSaved does not exist")
         return -1
     else:
         for s_id in songsToDelete:
@@ -1027,12 +1074,17 @@ def deleteFromSaved(pid, songsToDelete):
                 return -1
     return redirect(url_for('profile'))
 
-def addMultpleToSaved(pid, keyword, songsToAdd):
+def addMultipleToSaved(pid, keyword, songsToAdd):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    if (pid == None or songsToDelete == None):
-        print("ERROR: one or more inputs to addMultipleToSaved does not exist")
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
+    if (pid == None):
+        print("ERROR: pid to addMultipleToSaved does not exist")
+        return -1
+    if (songsToAdd == None):
+        print("ERROR: songs to addMultipleToSaved does not exist")
         return -1
     else:
         for s_id in songsToAdd:
@@ -1051,9 +1103,17 @@ def addToSaved(pid,keyword):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     playlistT = ()
-    if (pid == None or keyword == None or cursor == None):
-        print("ERROR: one or more inputs to addToSaved does not exist")
+    if (pid == None):
+        print("ERROR: pid to addToSaved does not exist")
+        return -1
+    if (keyword == None):
+        print("ERROR: keyword to addToSaved does not exist")
+        return -1
+    if (cursor == None):
+        print("ERROR: no connection to DB")
         return -1
     else:
         while (playlistT == ()):
@@ -1081,6 +1141,8 @@ def loadMasterPlaylist(keyword, currentSIDs):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
     cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
     sids = cursor.fetchall()
     for sid in sids:
@@ -1089,14 +1151,20 @@ def loadMasterPlaylist(keyword, currentSIDs):
             song = cursor.fetchone()
             if (song != None):
                 song = song[0]
+            else:
+                print("Song name not retrieved")
             cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
             artist = cursor.fetchone()
             if (artist != None):
                 artist = artist[0]
+            else:
+                print("Song artist not retrieved")
             cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
             url = cursor.fetchone()
             if (url != None):
                 url = url[0]
+            else:
+                print("Song url not retrieved")
             song_info = {}
             song_info["name"] = song
             song_info["artist"] = artist
@@ -1124,12 +1192,16 @@ if (__name__ == "__main__"):
         path = os.path.dirname(os.path.abspath(__file__))
         conn = sqlite3.connect(path + '/test.db')
         cursor = conn.cursor()
+        if (cursor == None):
+            print ("ERROR opening cursor to database")
         cursor.execute('SELECT SQLITE_VERSION() ')
         data = cursor.fetchone()
         createPlaylist()
-        if stopDB:
-            loadDatabases()
-            stopDB = False
+        cursor.execute("SELECT mp_id from masterPlaylist where keyword = 'happy'")
+        if cursor.fetchone() == None:
+            if stopDB:
+                loadDatabases()
+                stopDB = False
         print "SQLite version: %s" % data 
     except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
