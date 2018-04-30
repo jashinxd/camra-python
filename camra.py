@@ -100,6 +100,8 @@ def createPlaylist():
     cursor.execute('''CREATE TABLE IF NOT EXISTS Playlist (p_id integer, s_id integer, keyword text, FOREIGN KEY(keyword) REFERENCES masterPlaylist(keyword), FOREIGN KEY(s_id) REFERENCES Song(s_id)) ''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS masterPlaylist (mp_id integer, keyword text PRIMARY KEY, length integer, FOREIGN KEY(mp_id) REFERENCES Playlist(p_id))''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Account (a_id integer PRIMARY KEY, playlist integer, p_id integer, FOREIGN KEY(playlist) REFERENCES Playlist(p_id))''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (username text, password text, p_id integer, PRIMARY KEY(username, p_id))''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Friends (myUsername text PRIMARY KEY, friend text, FOREIGN KEY(friend) REFERENCES users(username)) ''')
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Song'")
     if (cursor.fetchone() is None):
         print("error no Song table")
@@ -464,18 +466,39 @@ def save():
 def profile():
     if request.method == 'GET':
         if (current_user.is_authenticated):
-            userPlaylists = getUserPlaylists()
+            userPlaylists = getUserPlaylists(current_user.username)
             if userPlaylists == -1:
                 return redirect(url_for('index'))#404 page
             return render_template('profile.html', userPlaylists=userPlaylists)
         else:
             return redirect(url_for('index'))
     else:
-        userPlaylists = getUserPlaylists()
+        userPlaylists = getUserPlaylists(current_user.username)
         if userPlaylists == -1:
             return redirect(url_for('index'))#404 page
         print(userPlaylists)
         return render_template('profile.html', userPlaylists=userPlaylists)
+
+@app.route('/addfriendbyusername', methods=['GET', 'POST'])
+def addfriendbyusername():
+    if request.method == 'GET':
+        return redirect(url_for("index"))
+    else:
+        form = request.form
+        friendUsername = form["friendUsername"]
+        addFriends(current_user.username, friendUsername)
+        return redirect(url_for("profile"))
+
+@app.route('/friendsplaylists', methods=['GET', 'POST'])
+def friendsplaylists():
+    if request.method == 'GET':
+        return redirect(url_for("index"))
+    else:
+        if (current_user.is_authenticated):
+            friendsplaylists = findFriends(current_user.username)
+            return render_template("friends.html", friendsPlaylist=friendsplaylists)
+        if friendsplaylists == -1:
+            return redirect(url_for('index'))#404 page
     
 @app.route('/deleteplaylist', methods=['GET','POST'])
 def deleteplaylist():
@@ -1052,13 +1075,12 @@ def insertUserPlaylist(output):
     else:
         return redirect(url_for('index'))    
 
-def getUserPlaylists():
+def getUserPlaylists(username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     if (cursor == None):
         print ("ERROR opening cursor to database")
-    username = current_user.username
     if (cursor == None):
         print("ERROR: unable to retrieve DB info")
         return -1
@@ -1087,7 +1109,7 @@ def getUserPlaylists():
         plLength = len(cursor.fetchall())
         lengthList.append(plLength)
     for index, pid in enumerate(p_id_arr):
-        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index]})
+        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username})
     return dictList
     
 
@@ -1304,13 +1326,13 @@ def loadMasterPlaylist(keyword, currentSIDs):
                 song = song[0]
             else:
                 print("Song name not retrieved")
-            cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+            cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(sid[0]))
             artist = cursor.fetchone()
             if (artist != None):
                 artist = artist[0]
             else:
                 print("Song artist not retrieved")
-            cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+            cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(sid[0]))
             url = cursor.fetchone()
             if (url != None):
                 url = url[0]
@@ -1327,6 +1349,29 @@ def loadMasterPlaylist(keyword, currentSIDs):
         print("ERROR: not able to retrieve the song information of the inputted list")
         return -1
     return output
+
+def addFriends(username, friendUsername):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
+    cursor.execute("INSERT INTO Friends VALUES (?,?)", username, friendUsername)
+    friendName = cursor.fetchone()
+    return friendName
+
+def findFriends(username):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + '/test.db')
+    cursor = conn.cursor()
+    friendPlaylist = []
+    if (cursor == None):
+        print ("ERROR opening cursor to database")
+    cursor.execute("SELECT Friends.friend FROM Friends WHERE username="+username)
+    friends = cursor.fetchall()
+    for friend in friends:
+        friendPlaylist.append(getUserPlaylists(friend[0]))
+    return friendPlaylist
     
 # This method pre-stores popular tags for emotion, location, and weather  
 def init_db(): 
