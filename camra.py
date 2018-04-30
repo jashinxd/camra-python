@@ -21,6 +21,72 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+def filterUsername(username, password):
+    if not username:
+        print ("no username")
+        return -1
+    if not password:
+        print ("no password")
+        return -1
+    if (len(username) < 4) or (len(password) < 4):
+        print ("too short")
+        return -1
+    if (len(username) > 15) or (len(password) > 15):
+        print ("too long")
+        return -1
+    if ("~" in username) or ("~" in password):
+        print("no special characters allowed: ~")
+        return -1
+    if ("!" in username) or ("!" in password):
+        print("no special characters allowed: !")
+        return -1
+    if ("@" in username) or ("@" in password):
+        print("no special characters allowed: @")
+        return -1
+    if ("#" in username) or ("#" in password):
+        print("no special characters allowed: #")
+        return -1
+    if ("$" in username) or ("$" in password):
+        print("no special characters allowed: $")
+        return -1
+    if ("%" in username) or ("%" in password):
+        print("no special characters allowed: %")
+        return -1
+    if ("^" in username) or ("^" in password):
+        print("no special characters allowed: ^")
+        return -1
+    if ("&" in username) or ("&" in password):
+        print("no special characters allowed: &")
+        return -1
+    if ("*" in username) or ("*" in password):
+        print("no special characters allowed: *")
+        return -1
+    if ("(" in username) or ("(" in password):
+        print("no special characters allowed: (")
+        return -1
+    if (")" in username) or (")" in password):
+        print("no special characters allowed: )")
+        return -1
+    if (username is "username") or (username is "password"):
+        print("generic username. choose something else")
+        return -1
+    if (password is "username") or (password is "password"):
+        print("generic password. choose something else")
+        return -1
+    matchingPattern = "0123456789"
+    if ((len(username.find(matchingPattern))) > 3) or ((len(username.find(matchingPattern))) > 3):
+        print("invalid")
+        return -1
+    matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
+    if ((len(username.find(matchingAlphabetPattern))) > 3) or ((len(username.find(matchingAlphabetPattern))) > 3):
+        print("invalid")
+        return -1
+    if (filterBadSongs(username)):
+        print ("explicit language in username not allowed")
+    if (filterBadSongs(password)):
+        print ("explict language in password not allowed")
+    
+
 
 def createPlaylist():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -56,10 +122,12 @@ def getMasterList(tag):
     sOffset = 0
     
     while (songCounter < 200):
+        print("fack u")
         results = sp.search(q = tag, limit = 2, offset = sOffset, type = 'playlist')
 
         for playlist in results["playlists"]["items"]:
             playlistid = playlist["id"]
+            print(playlist["owner"]["id"])
             if (',' not in playlist["owner"]["id"]):
                 playlistuser = playlist["owner"]["id"]
                 print(playlistuser)
@@ -134,9 +202,9 @@ def insertDBMaster(mPlaylist, keyword):
        
         cursor.executemany("INSERT OR REPLACE INTO Song VALUES (?,?,?,?)", insertSongs)
         conn.commit()
-        cursor.executemany("INSERT INTO Playlist VALUES (?,?,?)", insertPlaylist)
+        cursor.executemany("INSERT OR REPLACE INTO Playlist VALUES (?,?,?)", insertPlaylist)
         conn.commit()
-        cursor.execute("INSERT INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
+        cursor.execute("INSERT OR REPLACE INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
         conn.commit()
         print(keyword) # something wrong here
         cursor.execute("SELECT * FROM masterPlaylist WHERE mp_id = " + str(pID) + " AND keyword = " + "'"+ keyword +"'" + " AND length = " + str(len(mPlaylist)))
@@ -144,7 +212,7 @@ def insertDBMaster(mPlaylist, keyword):
             print("ERROR: unable to insert Master Playlist entry")
 
 def loadDatabases():
-    
+    print("enter")
     happySongs = getMasterList('happy')
     insertDBMaster(happySongs, 'happy')
 
@@ -227,32 +295,7 @@ def index():
     length = request.form.get("length")
     if (length is None):
         return render_template("index.html")#print on screen that you need a length
-    if request.method == "GET":
-        return render_template("index.html")
-    elif request.method == "POST":
-        form = request.form
-        if (form is None):
-            print("No form found")
-        category = form["category"]
-        if (category is None):
-            print("No category")
-        length = form["length"]
-        if (length is None):
-            print("No length")
-        mood = form["moodoption"]
-        if (mood is None):
-            print("No mood")
-        songs = []
-        if (category == "location"):
-            songs = getLocationSongs(length)
-        elif (category == "weather"):
-            songs = getWeatherSongs(length)
-        elif (category == "mood"):
-            songs = getSongs(mood, length)
-        else:
-            return redirect(url_for('index'))#redirect to 404 screen
-        session["output"] = songs
-    return redirect(url_for("results"), code = 307)
+    return render_template("index.html")
 
 @app.route("/results", methods=["GET", "POST"])
 def results():
@@ -575,6 +618,8 @@ def register():
     if username is None:
         return redirect(url_for('login'))
     password = form['password']
+    if filterUsername(username, password) == -1:
+        return redirect(url_for('login'))
     check = User.query.filter_by(username = username).first()
     if (check is not None):
         print("in here!")
@@ -662,10 +707,10 @@ def getSpotifySongs(results):
                 playlistid = playlist["id"]
             else:
                 playlistid = "PlaylistID does not exist"
-            if (playlist["owner"]["id"] != None):
+            if (playlist["owner"]["id"] != None and ',' not in playlist["owner"]["id"]):
                 playlistuser = playlist["owner"]["id"]
             else:
-                playlistuser = "PlaylistUser does not exist"
+                continue
             if ((playlistid != "PlaylistID does not exist") and (playlistid != "PlaylistUser does not exist")):
                 psongs = sp.user_playlist_tracks(user = playlistuser, playlist_id = playlistid)
             else:
@@ -692,9 +737,9 @@ def createSpotifySongObjects(psongs):
             else:
                 song["url"] = "No URL Exists"
             if (song["url"] != "No URL Exists"):
-                print("song: " + tInfo["track"]["name"])
-                print("artist: " + tInfo["track"]["artists"][0]["name"])
-                print("url:" + tInfo["track"]["preview_url"])
+               # print("song: " + tInfo["track"]["name"])
+               # print("artist: " + tInfo["track"]["artists"][0]["name"])
+               # print("url:" + tInfo["track"]["preview_url"])
                 songlist.append(song)
         return songlist
     else:
@@ -720,11 +765,11 @@ def createLastFMSongs(r):
                         Nsong["url"] = results["tracks"]["items"][0]["preview_url"]
                     else:
                         Nsong["url"] = "URL Does Not Exist"
-                        print("url does not exist")
+                      #  print("url does not exist")
                     if ((Nsong["name"] != "Name Does Not Exist") and
                         (Nsong["artist"] != "Artist Does Not Exist") and
                         (Nsong["url"] != "URL Does Not Exist")):
-                        print("everything ok")
+                      #  print("everything ok")
                         songlist.append(Nsong)
         return songlist
     else:
@@ -1204,28 +1249,24 @@ def loadMasterPlaylist(keyword, currentSIDs):
     
 # This method pre-stores popular tags for emotion, location, and weather  
 def init_db():
-    stopDB = True
+    
     db.init_app(app)
     db.app = app
     db.create_all()
-    path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + '/test.db')
-    cursor = conn.cursor()
-    createPlaylist()
-    """
-    if stopDB:
-        loadDatabases()
-        stopDB = False
-    """
 
 if (__name__ == "__main__"):
     init_db()
     try:
+        stopDB = True
         path = os.path.dirname(os.path.abspath(__file__))
         conn = sqlite3.connect(path + '/test.db')
         cursor = conn.cursor()
         cursor.execute('SELECT SQLITE_VERSION() ')
         data = cursor.fetchone()
+        createPlaylist()
+        if stopDB:
+            loadDatabases()
+            stopDB = False
         print "SQLite version: %s" % data 
     except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
