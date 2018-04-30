@@ -22,7 +22,10 @@
                     </li>
                   </ul>
                 <ul class="navbar-nav navbar-right">
-		    {% if current_user.is_authenticated %}
+		  {% if current_user.is_authenticated %}
+	<li class="nav-item">
+            <a class="nav-link" href="/friendsplaylists" method="post"><span class="fa fa-user"></span>Friends' Playlists</a>
+        </li>
         <li class="nav-item">
             <a class="nav-link" href="/profile"><span class="fa fa-user"></span>My Profile</a>
         </li>

@@ -44,12 +44,20 @@
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <span>
-                            <h1 class="panel-title pull-left" style="font-size:30px;">{{current_user.username}}</h1>
+                          <h1 class="panel-title pull-left" style="font-size:30px;">{{current_user.username}}</h1>
                         </span>
                     </div>
+		    <div class="panel-body">
+			<span>
+			  <h2 class="panel-title pull-left" style="font-size:20px:">Add Friend by Username: </h2>			  
+			  <form action="/addfriendbyusername" method="POST">
+			    <input type="text" name="friendUsername">
+			    <button type="submit" class="btn btn-primary">Add Friend</button>
+			  </form>
+			</span>
+		    </div>
                 </div>
                 <hr>
-
                 {% for info in userPlaylists %}
                 <!-- Simple post content example. -->
                 <div class="panel panel-default">
