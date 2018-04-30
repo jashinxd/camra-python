@@ -83,8 +83,10 @@ def filterUsername(username, password):
         return -1
     if (filterBadSongs(username)):
         print ("explicit language in username not allowed")
+        return -1
     if (filterBadSongs(password)):
         print ("explict language in password not allowed")
+        return -1
     
 def createPlaylist():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -616,24 +618,27 @@ def register():
     if username is None:
         return redirect(url_for('login'))
     password = form['password']
+    print(filterUsername(username, password))
     if filterUsername(username, password) == -1:
-        return redirect(url_for('login'))
-    check = User.query.filter_by(username = username).first()
-    if (check is not None):
-        print("in here!")
-        message = "This username already exists. Try again"
-        flash ("This username already exists. Try again", 'error')
-        return render_template('register.html', message=message)
+        return redirect(url_for('register'))
     else:
-        if password is None:
+        print("shouldnt be in here u dumbfuk")
+        check = User.query.filter_by(username = username).first()
+        if (check is not None):
+            print("in here!")
+            message = "This username already exists. Try again"
+            flash ("This username already exists. Try again", 'error')
+            return render_template('register.html', message=message)
+        else:
+            if password is None:
+                return redirect(url_for('login'))
+            user = User(username, password, 0)
+            if user is None:
+                return redirect(url_for('login'))
+            db.session.add(user)
+            db.session.commit()
+            flash('User successfully registered')
             return redirect(url_for('login'))
-        user = User(username, password, 0)
-        if user is None:
-            return redirect(url_for('login'))
-        db.session.add(user)
-        db.session.commit()
-        flash('User successfully registered')
-        return redirect(url_for('login'))
  
 @app.route('/login',methods=['GET','POST'])
 def login():
