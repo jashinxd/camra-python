@@ -23,9 +23,23 @@ def createBadWordsRUS():
            "лысого в кулаке гонять", "малофя", "манда"]
     return bad
 
+def createBadWordsSPAN():
+    bad = ["Asesinato", "asno", "bastardo", "Bollera",
+           "Cabron", "Cabrón", "Caca", "Chupada",
+           "Chupapollas", "Chupetón", "concha", "Concha de tu madre",
+           "Coño", "Coprofagía", "Culo", "Drogas", 
+           "Esperma", "Fiesta de salchichas", "Follador", "Follar",
+           "Gilipichis", "Gilipollas", "Hacer una paja", "Haciendo el amor",
+           "Heroína", "Hija de puta", "Hijaputa", "Hijo de puta",
+           "Hijoputa", "Idiota", "Imbécil", "infierno",
+           "Jilipollas", "Kapullo", "Lameculos", "Maciza",
+           "Macizorra", "maldito", "Mamada", "Marica"]
+    return bad
+
 def filterBadSongs(songName):
     badEng = createBadWordsENG()
     badRus = createBadWordsRUS()
+    badSpan = createBadWordsSPAN()
     if (len(badEng) == 0) or (len(badRus) == 0):
         return True
     if (songName == None):
@@ -38,11 +52,16 @@ def filterBadSongs(songName):
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
             return True
+    for word in badSpan:
+        bad_word = re.compile(re.escape(word), re.IGNORECASE)
+        if re.search(bad_word, songName):
+            return True
     return False
 
 def censorFilteredWords(songName):
     badEng = createBadWordsENG()
     badRus = createBadWordsRUS()
+    badSpan = createBadWordsSPAN()
     cen = ""
     if (len(badEng) == 0) or (len(badRus) == 0):
         return True
@@ -54,6 +73,11 @@ def censorFilteredWords(songName):
             for i in list(word):
                 cen = cen + "*"
     for word in badRus:
+        bad_word = re.compile(re.escape(word), re.IGNORECASE)
+        if re.search(bad_word, songName):
+            for i in list(word):
+                cen = cen + "*"
+    for word in badSpan:
         bad_word = re.compile(re.escape(word), re.IGNORECASE)
         if re.search(bad_word, songName):
             for i in list(word):
