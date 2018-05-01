@@ -1017,26 +1017,38 @@ def viewPlaylist(p_id):
         print ("ERROR opening cursor to database")
     songList = []
     s_id_arr = []
-    cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+p_id)
+    rows_count = cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+p_id)
+    if rows_count == 0:
+        print ("No such s_id")
+        return -1
     sid = cursor.fetchone()
     while (sid != None):
         s_id_arr.append(sid)
         sid = cursor.fetchone()
     output = []
     for s_id in s_id_arr:
-        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        rows_count = cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        if rows_count == 0:
+            print ("No such song")
+            return -1
         song = cursor.fetchone()
         if (song != None):
             song = song[0]
         else:
             print("Couldn't retrieve song")
-        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        rows_count1 = cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        if rows_count1 == 0:
+            print ("No such artist")
+            return -1
         artist = cursor.fetchone()
         if (artist != None):
             artist = artist[0]
         else:
             print("Couldn't retrieve artist")
-        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        rows_count2 = cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        if rows_count2 == 0:
+            print ("No such artist")
+            return -1
         url = cursor.fetchone()
         if (url != None):
             url = url[0]
@@ -1110,6 +1122,7 @@ def insertUserPlaylist(output):
         db.session.add(user)
         db.session.commit()
         cursor.execute("SELECT * FROM users WHERE p_id ="+str(pID))
+        cursor.commit()
         playlistInserted = cursor.fetchone()
         if (playlistInserted == None):
             return redirect(url_for('index'))
@@ -1351,12 +1364,20 @@ def addToSaved(pid,keyword):
         return -1
     else:
         while (playlistT == ()):
-            cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+            rows_count0 = cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+            if rows_count0 == 0:
+                print ("No such artist")
+                return -1
             sids = cursor.fetchall()
+            if not sids:
+                return -1
             sid = random.choice(sids)[0]
             if (sid == None):
                 print("ERROR: relevant sid unable to be found")
-            cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
+            rows_count = cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
+            if rows_count == 0:
+                print ("No such s_id")
+                return -1
             playlistsid = cursor.fetchone()
             if (playlistsid == None):
                 playlistT = (pid, sid, keyword)
@@ -1364,7 +1385,10 @@ def addToSaved(pid,keyword):
         cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
         print("inserting")
         conn.commit()
-        cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(playlistT[0]) + " AND s_id = " + str(playlistT[1]) + " AND keyword = " +'"'+ str(playlistT[2]) + '"')
+        rows_count = cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(playlistT[0]) + " AND s_id = " + str(playlistT[1]) + " AND keyword = " +'"'+ str(playlistT[2]) + '"')
+        if rows_count == 0:
+            print ("No such playlist")
+            return -1
         if (cursor.fetchone() == None):
             print("ERROR: unable to insert new song into playlist")
             return -1
@@ -1381,19 +1405,28 @@ def loadMasterPlaylist(keyword, currentSIDs):
     sids = cursor.fetchall()
     for sid in sids:
         if str(sid[0]) not in currentSIDs:
-            cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(sid[0]))
+            rows_count0 = cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(sid[0]))
+            if rows_count0 == 0:
+                print ("No such artist")
+                return -1
             song = cursor.fetchone()
             if (song != None):
                 song = song[0]
             else:
                 print("Song name not retrieved")
-            cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(sid[0]))
+            rows_count = cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(sid[0]))
+            if rows_count == 0:
+                print ("No such artist")
+                return -1
             artist = cursor.fetchone()
             if (artist != None):
                 artist = artist[0]
             else:
                 print("Song artist not retrieved")
-            cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(sid[0]))
+            rows_count1 = cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(sid[0]))
+            if rows_count1 == 0:
+                print ("No such url")
+                return -1
             url = cursor.fetchone()
             if (url != None):
                 url = url[0]
@@ -1419,7 +1452,7 @@ def addFriends(username, friendUsername):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    if (cursor == None):
+    if (cursor is None):
         print ("ERROR opening cursor to database")
     rows_count = cursor.execute("SELECT * FROM Friends WHERE friend="+'"'+friendUsername+'"') 
     conn.commit()  
@@ -1438,6 +1471,8 @@ def findFriends(username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if cursor is None:
+        return -1
     friendPlaylist = []
     if (cursor == None):
         print ("ERROR opening cursor to database")
@@ -1448,6 +1483,8 @@ def findFriends(username):
         return -1
     for friend in friends:
         newFriend = getUserPlaylists(friend[0])
+        if not newFriend:
+            return -1
         friendPlaylist.append(newFriend)
     conn.commit()
     print("printing friendplaylist")
