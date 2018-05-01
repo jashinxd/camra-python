@@ -221,7 +221,7 @@ def insertDBMaster(mPlaylist, keyword):
         conn.commit()
         cursor.execute("INSERT OR REPLACE INTO masterPlaylist VALUES (" + str(pID) + ", "+"'"+keyword+"'"+", " + str(len(mPlaylist)) + ")")
         conn.commit()
-        print(keyword) # something wrong here
+        print(keyword)
         cursor.execute("SELECT * FROM masterPlaylist WHERE mp_id = " + str(pID) + " AND keyword = " + "'"+ keyword +"'" + " AND length = " + str(len(mPlaylist)))
         if (cursor.fetchone() == None):
             print("ERROR: unable to insert Master Playlist entry")
@@ -782,24 +782,26 @@ def createSpotifySongObjects(psongs):
     songlist = []
     if (psongs != None):
         for tInfo in psongs["items"]:
-            song = {}
-            if (tInfo["track"]["name"] != None):
-                song["name"] = tInfo["track"]["name"]
-            else:
-                song["name"] = "No Name Exists"
-            if (tInfo["track"]["artists"][0]["name"] != None):
-                song["artist"] = tInfo["track"]["artists"][0]["name"]
-            else:
-                song["artist"] = "No Artist Exists"
-            if (tInfo["track"]["preview_url"] != None):
-                song["url"] = tInfo["track"]["preview_url"]
-            else:
-                song["url"] = "No URL Exists"
-            if (song["url"] != "No URL Exists"):
-               # print("song: " + tInfo["track"]["name"])
-               # print("artist: " + tInfo["track"]["artists"][0]["name"])
-               # print("url:" + tInfo["track"]["preview_url"])
-                songlist.append(song)
+            if (tInfo != None):
+                if (tInfo["track"] != None):
+                    song = {}
+                    if (tInfo["track"]["name"] != None):
+                        song["name"] = tInfo["track"]["name"]
+                    else:
+                        song["name"] = "No Name Exists"
+                    if (tInfo["track"]["artists"][0]["name"] != None):
+                        song["artist"] = tInfo["track"]["artists"][0]["name"]
+                    else:
+                        song["artist"] = "No Artist Exists"
+                    if (tInfo["track"]["preview_url"] != None):
+                        song["url"] = tInfo["track"]["preview_url"]
+                    else:
+                        song["url"] = "No URL Exists"
+                    if (song["url"] != "No URL Exists"):
+                    # print("song: " + tInfo["track"]["name"])
+                    # print("artist: " + tInfo["track"]["artists"][0]["name"])
+                    # print("url:" + tInfo["track"]["preview_url"])
+                        songlist.append(song)
         return songlist
     else:
         return -1
@@ -867,13 +869,48 @@ def getRandomSongs(length):
                         "Charlie Key", "Hushed"]
     countryArtists = ["Carrie Underwood", "George Strait", "Merle Haggard", "Willie Nelson",
                       "Alabama", "Alan Jackson", "Tim McGraw", "Buck Owens",
-                      "Johnny Cash", "Kenny Rogers", "Dolly Parton", "Toby Keith"
+                      "Johnny Cash", "Kenny Rogers", "Dolly Parton", "Toby Keith",
                       "Randy Travis", "Ray Price", "Rascal Flatts", "Keith Urban",
-                      "The Judds", "Blake Shelton", "Faith Hill", "Bill Anderson",
+                      "The Judds", "Blake Shelton", "Faith Hill",
                       "Lynn Anderson", "Charlie Rich", "Connie Smith", "Sugarland",
                       "Tracy Lawrence", "Sawyer Brown", "Lonestar", "Eric Church",
                       "Clay Walker", "Miranda Lambert"]
-    selectedPlaylistNum = random.randint(0, 3)
+    rockArtists = ["Led Zeppelin", "The Beatles", "AC/DC", "Aerosmith", "Red Hot Chili Peppers",
+                    "The Rolling Stones", "Pink Floyd", "The Who", "Fleetwood Mac", "Lynyrd Skynyrd",
+                    "U2", "Radiohead", "Nirvana", "Green Day", "The Class", "Queen", "Black Sabbath",
+                    "Ramones", "Creedence Clearwater Revival", "The Allman Brothers", "Pearl Jam", 
+                    "The Kinks", "Foo Fighters", "ZZ Top", "Eagles", "The Doors", "Van Halen",
+                    "Bon Jovi", "Def Leppard", "Rush", "R.E.M", "Dire Straits", "Talking Heads",
+                    "The Police", "The Cure", "The Smashing Pumpkins", "Rage Against the Machine",
+                    "Deep Purple", "Bob Seger", "The Monkees", "The Zombies", "The Everly Brothers", 
+                    "Elton John", "Elvis Presley"]
+    hipHopArtists = ["Beastie Boys", "A Tribe Called Quest", "Wu-Tang Clan","Public Enemy", 
+                    "Run-D.M.C", "OutKast", "N.W.A", "The Roots", "Cypress Hill", "Salt-N-Pepa", 
+                    "Bone Thugs-N-Harmony", "21 Savage", "2 Chainz", "Action Bronson", "Akon", 
+                    "A$AP Ferg", "A$AP Rocky", "B.o.B", "Chance the Rapper" , "Chris Brown", 
+                    "Coolio", "Dr. Dre", "Desiigner", "Eminem", "Flo Rida", "G-Eazy", "Ghostface Killah", 
+                    "Gucci Mane", "Iggy Azalea", "Ice Cube", "J-Kwon", "J.Cole", "Jay Z", "Jeremih",
+                    "Kanye West", "Kendrick Lamar", "Kid Cudi", "Kodak Black", "Lauryn Hill", "Lil Jon",
+                    "LL Cool J", "Lil Uzi Vert", "Lil Wayne", "Lupe Fiasco", "Mac Miller", "Machine Gun Kelly",
+                    "Meek Mill", "Nas", "Nicki Minaj", "Omarion", "Pitbull", "Post Malone", "Queen Latifah",
+                    "Raekwon", "Queen Latifah", "Snoop Dogg", "Sean Paul", "SZA", "Timbaland", "Travis Scott",
+                    "Tupac Shakur", "Ty Dolla Sign", "Vince Staples", "Waka Flocka Flame", "Wyclef Jean"]
+    metalArtists = ["Metallica", "Judas Priest", "Slayer", "Pantera", "Megadeth", "Iron Maiden", 
+                    "Slipknot", "Korn", "Sepultura", "System Of A Down", "Lamb Of God", "Mastodon", "Anthrax",
+                    "Cannibal Corpse", "Disturbed", "Rammstein", "Alice in Chains", "Savatage", "Overkill",
+                    "Napalm Death", "Dream Theater", "Darkthrone"]
+    rnbArtists = ["Sly & the Family Stone", "Four Tops", "Gladys Knight & the Pips", "Chic", "The Temptations",
+                    "Boyz II Men", "The Supremes", "The Miracles", "The Jackson 5", "The O'Jays", "Ohio Players",
+                    "New Edition", "TLC", "The Pointer Sisters", "Blackstreet", "Commodores", "The Spinners", 
+                    "The Drifters", "The Stylistics", "Sam & Dave", "The Whispers", "The Platters", "The Isley Brothers",
+                    "Earth, Wind & Fire", "Prince", "Michael Jackson", "Stevie Wonder", "Whitney Houston", 
+                    "Janet Jackson", "John Legend", "Aaliyah", "Marvin Gaye", "Erykah Badu", "Aretha Franklin", 
+                    "Babyface", "Chaka Khan", "Ray Charles", "Otis Redding", "Etta James", "Jill Scott", 
+                    "Maxwell", "Tina Turner", "Sam Cooke", "Al Green", "Anita Baker", "Donny Hathaway", "Isaac Hayes",
+                    "Barry White", "Patti LaBelle", "Diana Ross", "Luther Vandross", "Curtis Mayfield", "Lionel Richie",
+                    "Bill Withers", "James Brown", "Smokey Robinson"]
+            
+    selectedPlaylistNum = random.randint(0, 7)
     if selectedPlaylistNum == 0:
         artistLength = len(artists)
         selectedArtist = []
@@ -888,7 +925,8 @@ def getRandomSongs(length):
             selectedArtistSongs.extend(getSongs(song, length))
         for x in range(length):
             finalLength = len(selectedArtistSongs)
-            finalArray0.append(selectedArtistSongs[random.randint(0, finalLength -1 )])
+            print(finalLength)
+            finalArray0.append(selectedArtistSongs[random.randint(0, finalLength)])
         if not selectedArtistSongs:
             print("list is empty")
         return finalArray0
@@ -906,7 +944,8 @@ def getRandomSongs(length):
             selectedPopularArtistSongs.extend(getSongs(song, length))
         for x in range(length):
             finalLength = len(selectedPopularArtistSongs)
-            finalArray1.append(selectedPopularArtistSongs[random.randint(0, finalLength -1 )])
+            print(finalLength)
+            finalArray1.append(selectedPopularArtistSongs[random.randint(0, finalLength )])
         if not selectedPopularArtistSongs:
             print("list is empty")
         return finalArray1
@@ -914,7 +953,7 @@ def getRandomSongs(length):
         instrumentalArtistLength = len(instrumentalArtists)
         selectedInstrumentalArtist = []
         selectedInstrumentalArtistSongs = []
-        finalArray = []
+        finalArray2 = []
         for x in range(5):
             selectedInstrumentalArtist.append(instrumentalArtists[random.randint(0, instrumentalArtistLength - 1)])
         if not selectedInstrumentalArtist:
@@ -924,10 +963,11 @@ def getRandomSongs(length):
             selectedInstrumentalArtistSongs.extend(getSongs(song, length))
         for x in range(length):
             finalLength = len(selectedInstrumentalArtistSongs)
-            finalArray.append(selectedInstrumentalArtistSongs[random.randint(0, finalLength -1 )])
+            print(finalLength)
+            finalArray2.append(selectedInstrumentalArtistSongs[random.randint(0, finalLength  )])
         if not selectedInstrumentalArtistSongs:
             print("list is empty")
-        return finalArray
+        return finalArray2
     elif selectedPlaylistNum == 3:
         countryArtistLength = len(countryArtists)
         selectedCountryArtist = []
@@ -942,8 +982,85 @@ def getRandomSongs(length):
             selectedCountryArtistSongs.extend(getSongs(song, length))
         for x in range(length):
             finalLength = len(selectedCountryArtistSongs)
-            finalArray.append(selectedCountryArtistSongs[random.randint(0, finalLength -1 )])
+            print(finalLength)
+            finalArray.append(selectedCountryArtistSongs[random.randint(0, finalLength  )])
         if not selectedCountryArtistSongs:
+            print("list is empty")
+        return finalArray
+    elif selectedPlaylistNum == 4:
+        rockArtistLength = len(rockArtists)
+        selectedRockArtist = []
+        selectedRockArtistSongs = []
+        finalArray = []
+        for x in range(5):
+            selectedRockArtist.append(rockArtists[random.randint(0, rockArtistLength - 1)])
+        if not selectedRockArtist:
+            print("list is empty")
+        for song in selectedRockArtist:
+            print(song)
+            selectedRockArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedRockArtistSongs)
+            print(finalLength)
+            finalArray.append(selectedRockArtistSongs[random.randint(0, finalLength )])
+        if not selectedRockArtistSongs:
+            print("list is empty")
+        return finalArray
+    elif selectedPlaylistNum == 5:
+        hipArtistLength = len(hipHopArtists)
+        selectedHipArtist = []
+        selectedHipArtistSongs = []
+        finalArray = []
+        for x in range(5):
+            selectedHipArtist.append(hipHopArtists[random.randint(0, hipArtistLength - 1)])
+        if not selectedHipArtist:
+            print("list is empty")
+        for song in selectedHipArtist:
+            print(song)
+            selectedHipArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedHipArtistSongs)
+            print(finalLength)
+            finalArray.append(selectedHipArtistSongs[random.randint(0, finalLength )])
+        if not selectedHipArtistSongs:
+            print("list is empty")
+        return finalArray
+    elif selectedPlaylistNum == 6:
+        metalArtistLength = len(metalArtists)
+        selectedMetalArtist = []
+        selectedMetalArtistSongs = []
+        finalArray = []
+        for x in range(5):
+            selectedMetalArtist.append(metalArtists[random.randint(0, metalArtistLength - 1)])
+        if not selectedMetalArtist:
+            print("list is empty")
+        for song in selectedMetalArtist:
+            print(song)
+            selectedMetalArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedMetalArtistSongs)
+            print(finalLength)
+            finalArray.append(selectedMetalArtistSongs[random.randint(0, finalLength  )])
+        if not selectedMetalArtistSongs:
+            print("list is empty")
+        return finalArray
+    elif selectedPlaylistNum == 7:
+        rnbArtistLength = len(rnbArtists)
+        selectedRnbArtist = []
+        selectedRnbArtistSongs = []
+        finalArray = []
+        for x in range(5):
+            selectedRnbArtist.append(rnbArtists[random.randint(0, rnbArtistLength - 1)])
+        if not selectedRnbArtist:
+            print("list is empty")
+        for song in selectedRnbArtist:
+            print(song)
+            selectedRnbArtistSongs.extend(getSongs(song, length))
+        for x in range(length):
+            finalLength = len(selectedRnbArtistSongs)
+            print(finalLength)
+            finalArray.append(selectedRnbArtistSongs[random.randint(0, finalLength  )])
+        if not selectedRnbArtistSongs:
             print("list is empty")
         return finalArray
     else:
