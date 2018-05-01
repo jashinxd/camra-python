@@ -4,9 +4,10 @@ from sqlite3 import Error
 from flask_login import LoginManager, login_user, logout_user, current_user
 from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy.util as util
-import sys, random
+import sys, random, os
 from User import User
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from wordFilter import * 
 from sqlalchemy import *
 
@@ -72,14 +73,6 @@ def filterUsername(username, password):
     if (password is "username") or (password is "password"):
         print("generic password. choose something else")
         return -1
-    matchingPattern = "0123456789"
-    if (username.find(matchingPattern) > 3) or (username.find(matchingPattern) > 3):
-        print("invalid")
-        return -1
-   # matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
-    #if (username.find(matchingAlphabetPattern)) or (username.find(matchingAlphabetPattern)):
-     #   print("invalid")
-      #  return -1
     if (filterBadSongs(username)):
         print ("explicit language in username not allowed")
         return -1
