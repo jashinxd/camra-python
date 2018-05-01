@@ -333,12 +333,19 @@ def results():
         form = request.form
         if (form is None):
             print("No form found")
-        category = form["category"]
-        if (category is None):
-            print("No category")
-        length = int(form["length"])
-        if (length is None):
-            print("No length")
+        if "category" in form:
+            category = form["category"]
+        else:
+            message = "ERROR: You did not specify a category"
+            return render_template("index.html", message=message)
+        length = form["length"]
+        print("printing length")
+        print(length)
+        if (length == ""):
+            message = "ERROR: You did not specify a length"
+            return render_template("index.html", message=message)
+        else:
+            length = int(length)
         mood = form["moodoption"]
         if (mood is None):
             print("No mood")
@@ -568,7 +575,15 @@ def friendsplaylists():
         friendsplaylists = findFriends(current_user.username)
         if (friendsplaylists == -1):
             return redirect(url_for('index'))#404 page
-        return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp)
+        print(friendsplaylists)
+        if (friendsplaylists == []):
+            noFriendsMessage = "You do not have any friends right now."
+            return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp, noFriendsMessage = noFriendsMessage)
+        if (friendsplaylists == [[]]):
+            noFriendsMessage = "Your friends do not have any playlists generated."
+            return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp, noFriendsMessage = noFriendsMessage)
+        noFriendsMessage = "You Have Friends"
+        return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp, noFriendsMessage = noFriendsMessage)
     else:
         return redirect(url_for('index'))#404 page
         
@@ -1180,6 +1195,8 @@ def getUserPlaylists(username):
         lengthList.append(plLength)
     for index, pid in enumerate(p_id_arr):
         keywordURL = getPicture(keywordList[index])
+        if (keywordURL == -1):
+            return redirect(url_for(index))#404
         dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username, 'keywordURL': keywordURL})
     return dictList
     
@@ -1452,13 +1469,11 @@ def findFriends(username):
     friends = cursor.fetchall()
     if not friends:
         print("no friends")
-        return -1
+        return []
     for friend in friends:
         newFriend = getUserPlaylists(friend[0])
         friendPlaylist.append(newFriend)
     conn.commit()
-    print("printing friendplaylist")
-    print(friendPlaylist)
     return friendPlaylist
 
 def getPicture(keyword):
@@ -1466,10 +1481,17 @@ def getPicture(keyword):
     apiKey = "8862810-93a7d872dc2914a91ddd617f6"
     url = apiURL + "?key=" + apiKey + "&q=" + keyword + "&image_type=photo"
     requested = urllib2.urlopen(url)
+    if (requested is None):
+        return -1
     result = requested.read()
+    if (result is None):
+        return -1
     r = json.loads(result)
-    print(r)
+    if (r is None):
+        return -1
     picURL = r["hits"][0]["previewURL"]
+    if (picURL is None):
+        return -1
     return picURL
     
 # This method pre-stores popular tags for emotion, location, and weather  
