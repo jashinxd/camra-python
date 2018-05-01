@@ -1256,7 +1256,7 @@ def insertUserPlaylist(output):
         db.session.add(user)
         db.session.commit()
         cursor.execute("SELECT * FROM users WHERE p_id ="+str(pID))
-        cursor.commit()
+        conn.commit()
         playlistInserted = cursor.fetchone()
         if (playlistInserted == None):
             return redirect(url_for('index'))
@@ -1275,7 +1275,7 @@ def insertUserPlaylist(output):
                 songName = song["name"]
                 songArtist = song["artist"]
                 songID = abs(hash(songName+songArtist)) % (10 ** 8)
-                cursor.execute("SELECT * FROM Playlist WHERE p_id="+str(pID)+" AND s_id="+str(songID)+" AND keyword="+'"'+session["keyword"]+'"')
+                cursor.execute("SELECT * FROM Playlist WHERE p_id="+str(pID)+" AND s_id="+str(songID))
                 songInserted = cursor.fetchone()
                 print(songInserted)
                 if (songInserted == None):
@@ -1310,7 +1310,7 @@ def getUserPlaylists(username):
     for pid in p_id_arr:
         cursor.execute("SELECT keyword FROM Playlist WHERE p_id ="+str(pid[0]))
         keyword = cursor.fetchone()
-        if keyword == None:
+        if keyword[0] == None:
             keywordList.append(keyword)
         else:
             keywordList.append(keyword[0].encode("ascii"))
