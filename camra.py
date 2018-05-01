@@ -4,9 +4,10 @@ from sqlite3 import Error
 from flask_login import LoginManager, login_user, logout_user, current_user
 from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy.util as util
-import sys, random
+import sys, random, os
 from User import User
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from wordFilter import * 
 from sqlalchemy import *
 
@@ -72,14 +73,6 @@ def filterUsername(username, password):
     if (password is "username") or (password is "password"):
         print("generic password. choose something else")
         return -1
-    matchingPattern = "0123456789"
-    if (username.find(matchingPattern) > 3) or (username.find(matchingPattern) > 3):
-        print("invalid")
-        return -1
-   # matchingAlphabetPattern = "abcdefghijklmnopqrstuvwxyz"
-    #if (username.find(matchingAlphabetPattern)) or (username.find(matchingAlphabetPattern)):
-     #   print("invalid")
-      #  return -1
     if (filterBadSongs(username)):
         print ("explicit language in username not allowed")
         return -1
@@ -279,6 +272,39 @@ def loadDatabases():
     columbus = getMasterList("Columbus")
     insertDBMaster(columbus, 'Columbus')
     print("col")
+    newyork = getMasterList("New York")
+    insertDBMaster(newyork, 'New York')
+    print("ny")
+    honolulu = getMasterList("Honolulu")
+    insertDBMaster(honolulu, 'Honolulu')
+    print("honolulu")
+    anchorage = getMasterList("Anchorage")
+    insertDBMaster(anchorage, 'Anchorage')
+    print("ank")
+    nashville = getMasterList("Nashville")
+    insertDBMaster(nashville, 'Nashville')
+    print("nash")
+    atlanta = getMasterList("Atlanta")
+    insertDBMaster(atlanta, 'Atlanta')
+    print("atl")
+    dallas = getMasterList("Dallas")
+    insertDBMaster(dallas, 'Dallas')
+    print("dal")
+    houston = getMasterList("Houston")
+    insertDBMaster(houston, 'Houston')
+    print("hous")
+    chicago = getMasterList("Chicago")
+    insertDBMaster(chicago, 'Chicago')
+    print("chi")
+    portland = getMasterList("Portland")
+    insertDBMaster(portland, 'Portland')
+    print("ptl")
+    orlando = getMasterList("Orlando")
+    insertDBMaster(orlando, 'Orlando')
+    print("orl")
+    miami = getMasterList("Miami")
+    insertDBMaster(miami, 'Miami')
+    print("miami")
     print("FIN")
 
 @login_manager.user_loader
@@ -300,12 +326,19 @@ def results():
         form = request.form
         if (form is None):
             print("No form found")
-        category = form["category"]
-        if (category is None):
-            print("No category")
-        length = int(form["length"])
-        if (length is None):
-            print("No length")
+        if "category" in form:
+            category = form["category"]
+        else:
+            message = "ERROR: You did not specify a category"
+            return render_template("index.html", message=message)
+        length = form["length"]
+        print("printing length")
+        print(length)
+        if (length == ""):
+            message = "ERROR: You did not specify a length"
+            return render_template("index.html", message=message)
+        else:
+            length = int(length)
         mood = form["moodoption"]
         if (mood is None):
             print("No mood")
@@ -533,9 +566,18 @@ def friendsplaylists():
             message = "The weather is extreme right now."
             picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
         friendsplaylists = findFriends(current_user.username)
+        print(friendsplaylists)
         if (friendsplaylists == -1):
             return redirect(url_for('index'))#404 page
-        return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp)
+        print(friendsplaylists)
+        if (friendsplaylists == []):
+            noFriendsMessage = "You do not have any friends right now."
+            return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp, noFriendsMessage = noFriendsMessage)
+        if (friendsplaylists == [[]]):
+            noFriendsMessage = "Your friends do not have any playlists generated."
+            return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp, noFriendsMessage = noFriendsMessage)
+        noFriendsMessage = "You Have Friends"
+        return render_template("friends.html", friendsPlaylist=friendsplaylists, message=message, picURL = picURL, temp = temp, noFriendsMessage = noFriendsMessage)
     else:
         return redirect(url_for('index'))#404 page
         
@@ -1108,26 +1150,38 @@ def viewPlaylist(p_id):
         print ("ERROR opening cursor to database")
     songList = []
     s_id_arr = []
-    cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+p_id)
+    rows_count = cursor.execute("SELECT s_id FROM Playlist WHERE p_id ="+p_id)
+    if rows_count == 0:
+        print ("No such s_id")
+        return -1
     sid = cursor.fetchone()
     while (sid != None):
         s_id_arr.append(sid)
         sid = cursor.fetchone()
     output = []
     for s_id in s_id_arr:
-        cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        rows_count = cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(s_id[0]))
+        if rows_count == 0:
+            print ("No such song")
+            return -1
         song = cursor.fetchone()
         if (song != None):
             song = song[0]
         else:
             print("Couldn't retrieve song")
-        cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        rows_count1 = cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(s_id[0]))
+        if rows_count1 == 0:
+            print ("No such artist")
+            return -1
         artist = cursor.fetchone()
         if (artist != None):
             artist = artist[0]
         else:
             print("Couldn't retrieve artist")
-        cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        rows_count2 = cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(s_id[0]))
+        if rows_count2 == 0:
+            print ("No such artist")
+            return -1
         url = cursor.fetchone()
         if (url != None):
             url = url[0]
@@ -1201,6 +1255,7 @@ def insertUserPlaylist(output):
         db.session.add(user)
         db.session.commit()
         cursor.execute("SELECT * FROM users WHERE p_id ="+str(pID))
+        cursor.commit()
         playlistInserted = cursor.fetchone()
         if (playlistInserted == None):
             return redirect(url_for('index'))
@@ -1263,7 +1318,10 @@ def getUserPlaylists(username):
         plLength = len(cursor.fetchall())
         lengthList.append(plLength)
     for index, pid in enumerate(p_id_arr):
-        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username})
+        keywordURL = getPicture(keywordList[index])
+        if (keywordURL == -1):
+            return redirect(url_for(index))#404
+        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username, 'keywordURL': keywordURL})
     return dictList
     
 
@@ -1441,12 +1499,20 @@ def addToSaved(pid,keyword):
         return -1
     else:
         while (playlistT == ()):
-            cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+            rows_count0 = cursor.execute("SELECT s_id FROM masterPlaylist, Playlist WHERE mp_id = p_id AND masterPlaylist.keyword="+'"'+keyword+'"')
+            if rows_count0 == 0:
+                print ("No such artist")
+                return -1
             sids = cursor.fetchall()
+            if not sids:
+                return -1
             sid = random.choice(sids)[0]
             if (sid == None):
                 print("ERROR: relevant sid unable to be found")
-            cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
+            rows_count = cursor.execute("SELECT Playlist.s_id FROM Playlist WHERE Playlist.p_id =  " + str(pid) + " AND Playlist.s_id = " + str(sid))
+            if rows_count == 0:
+                print ("No such s_id")
+                return -1
             playlistsid = cursor.fetchone()
             if (playlistsid == None):
                 playlistT = (pid, sid, keyword)
@@ -1454,7 +1520,10 @@ def addToSaved(pid,keyword):
         cursor.execute("INSERT INTO Playlist VALUES (?,?,?)", playlistT)
         print("inserting")
         conn.commit()
-        cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(playlistT[0]) + " AND s_id = " + str(playlistT[1]) + " AND keyword = " +'"'+ str(playlistT[2]) + '"')
+        rows_count = cursor.execute("SELECT * FROM Playlist WHERE p_id = " + str(playlistT[0]) + " AND s_id = " + str(playlistT[1]) + " AND keyword = " +'"'+ str(playlistT[2]) + '"')
+        if rows_count == 0:
+            print ("No such playlist")
+            return -1
         if (cursor.fetchone() == None):
             print("ERROR: unable to insert new song into playlist")
             return -1
@@ -1471,19 +1540,28 @@ def loadMasterPlaylist(keyword, currentSIDs):
     sids = cursor.fetchall()
     for sid in sids:
         if str(sid[0]) not in currentSIDs:
-            cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(sid[0]))
+            rows_count0 = cursor.execute("SELECT Song.name FROM Song WHERE s_id="+str(sid[0]))
+            if rows_count0 == 0:
+                print ("No such artist")
+                return -1
             song = cursor.fetchone()
             if (song != None):
                 song = song[0]
             else:
                 print("Song name not retrieved")
-            cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(sid[0]))
+            rows_count = cursor.execute("SELECT Song.artist FROM Song WHERE s_id="+str(sid[0]))
+            if rows_count == 0:
+                print ("No such artist")
+                return -1
             artist = cursor.fetchone()
             if (artist != None):
                 artist = artist[0]
             else:
                 print("Song artist not retrieved")
-            cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(sid[0]))
+            rows_count1 = cursor.execute("SELECT Song.url FROM Song WHERE s_id="+str(sid[0]))
+            if rows_count1 == 0:
+                print ("No such url")
+                return -1
             url = cursor.fetchone()
             if (url != None):
                 url = url[0]
@@ -1509,7 +1587,7 @@ def addFriends(username, friendUsername):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
-    if (cursor == None):
+    if (cursor is None):
         print ("ERROR opening cursor to database")
     rows_count = cursor.execute("SELECT * FROM Friends WHERE friend="+'"'+friendUsername+'"') 
     conn.commit()  
@@ -1528,6 +1606,9 @@ def findFriends(username):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
+    if cursor is None:
+        print("cursor none")
+        return -1
     friendPlaylist = []
     if (cursor == None):
         print ("ERROR opening cursor to database")
@@ -1535,14 +1616,30 @@ def findFriends(username):
     friends = cursor.fetchall()
     if not friends:
         print("no friends")
-        return -1
+        return []
     for friend in friends:
         newFriend = getUserPlaylists(friend[0])
         friendPlaylist.append(newFriend)
     conn.commit()
-    print("printing friendplaylist")
-    print(friendPlaylist)
     return friendPlaylist
+
+def getPicture(keyword):
+    apiURL = "https://pixabay.com/api/"
+    apiKey = "8862810-93a7d872dc2914a91ddd617f6"
+    url = apiURL + "?key=" + apiKey + "&q=" + keyword + "&image_type=photo"
+    requested = urllib2.urlopen(url)
+    if (requested is None):
+        return -1
+    result = requested.read()
+    if (result is None):
+        return -1
+    r = json.loads(result)
+    if (r is None):
+        return -1
+    picURL = r["hits"][0]["previewURL"]
+    if (picURL is None):
+        return -1
+    return picURL
     
 # This method pre-stores popular tags for emotion, location, and weather  
 def init_db(): 

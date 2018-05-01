@@ -49,6 +49,17 @@
                     </div>
                 </div>
                 <hr>
+		{% if noFriendsMessage == "You do not have any friends right now." or noFriendsMessage == "Your friends do not have any playlists generated." %}
+		<div class="panel panel-default">
+                  <div class="panel-body">
+		    <div class="pull-left">
+                        <div class="post-content">
+                            <p style="font-weight: bold;">{{noFriendsMessage}}</p>
+                        </div>
+		    </div>
+                  </div>
+                </div>
+		{% endif %}
                 {% for friend in friendsPlaylist %}
                 {% for info in friend %}
                 <!-- Simple post content example. -->
@@ -56,7 +67,7 @@
                     <div class="panel-body">
                         <div class="pull-left">
                             <a href="#">
-                                <img class="media-object img-circle" src="http://i.imgur.com/6YToyEF.png" width="50px" height="50px" style="margin-right:8px; margin-top:-5px;">
+                                <img class="media-object img-circle" src="{{info['keywordURL']}}" width="50px" height="50px" style="margin-right:8px; margin-top:-5px;">
                             </a>
                         </div>
                         <div class="post-content">
