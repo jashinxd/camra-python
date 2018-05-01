@@ -1172,7 +1172,8 @@ def getUserPlaylists(username):
         plLength = len(cursor.fetchall())
         lengthList.append(plLength)
     for index, pid in enumerate(p_id_arr):
-        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username})
+        keywordURL = getPicture(keywordList[index])
+        dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username, 'keywordURL': keywordURL})
     return dictList
     
 
@@ -1452,6 +1453,17 @@ def findFriends(username):
     print("printing friendplaylist")
     print(friendPlaylist)
     return friendPlaylist
+
+def getPicture(keyword):
+    apiURL = "https://pixabay.com/api/"
+    apiKey = "8862810-93a7d872dc2914a91ddd617f6"
+    url = apiURL + "?key=" + apiKey + "&q=" + keyword + "&image_type=photo"
+    requested = urllib2.urlopen(url)
+    result = requested.read()
+    r = json.loads(result)
+    print(r)
+    picURL = r["hits"][0]["previewURL"]
+    return picURL
     
 # This method pre-stores popular tags for emotion, location, and weather  
 def init_db(): 
