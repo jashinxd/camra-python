@@ -566,6 +566,7 @@ def friendsplaylists():
             message = "The weather is extreme right now."
             picURL = "http://images.clipartpanda.com/tornado-clip-art-ncEyjGBai.png"
         friendsplaylists = findFriends(current_user.username)
+        print(friendsplaylists)
         if (friendsplaylists == -1):
             return redirect(url_for('index'))#404 page
         print(friendsplaylists)
@@ -1489,6 +1490,7 @@ def findFriends(username):
     conn = sqlite3.connect(path + '/test.db')
     cursor = conn.cursor()
     if cursor is None:
+        print("cursor none")
         return -1
     friendPlaylist = []
     if (cursor == None):
@@ -1500,8 +1502,6 @@ def findFriends(username):
         return []
     for friend in friends:
         newFriend = getUserPlaylists(friend[0])
-        if not newFriend:
-            return -1
         friendPlaylist.append(newFriend)
     conn.commit()
     return friendPlaylist
