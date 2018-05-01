@@ -1307,11 +1307,15 @@ def getUserPlaylists(username):
         if p_id[0] != 0:
             p_id_arr.append(p_id)
         p_id = cursor.fetchone()
+    print(p_id_arr)
     for pid in p_id_arr:
         cursor.execute("SELECT keyword FROM Playlist WHERE p_id ="+str(pid[0]))
         keyword = cursor.fetchone()
-        if keyword[0] == None:
-            keywordList.append(keyword)
+        if keyword == None:
+            continue
+        elif keyword[0] == None:
+            continue
+            #keywordList.append(keyword)
         else:
             keywordList.append(keyword[0].encode("ascii"))
     for pid in p_id_arr:
@@ -1319,7 +1323,7 @@ def getUserPlaylists(username):
         plLength = len(cursor.fetchall())
         lengthList.append(plLength)
     for index, pid in enumerate(p_id_arr):
-        keywordURL = getPicture(keywordList[index])
+        keywordURL = getPicture()
         if (keywordURL == -1):
             return redirect(url_for(index))#404
         dictList.append({'p_id': p_id_arr[index][0], 'keyword': keywordList[index], 'length': lengthList[index], 'username': username, 'keywordURL': keywordURL})
@@ -1624,7 +1628,8 @@ def findFriends(username):
     conn.commit()
     return friendPlaylist
 
-def getPicture(keyword):
+def getPicture():
+    """
     apiURL = "https://pixabay.com/api/"
     apiKey = "8862810-93a7d872dc2914a91ddd617f6"
     url = apiURL + "?key=" + apiKey + "&q=" + keyword + "&image_type=photo"
@@ -1640,7 +1645,8 @@ def getPicture(keyword):
     picURL = r["hits"][0]["previewURL"]
     if (picURL is None):
         return -1
-    return picURL
+    """
+    return "http://i0.kym-cdn.com/photos/images/facebook/001/250/498/dd3.png"
     
 # This method pre-stores popular tags for emotion, location, and weather  
 def init_db(): 
