@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # -*- coding: utf-8 -*-
 from app import app
 import camra
@@ -79,10 +78,46 @@ class Tests(unittest.TestCase):
         self.assertEqual(result, "happy")
 
     def test_wordFilter_censorFilteredWords_none(self):
-        self.assertEqual(result, True)
         result = censorFilteredWords(None)
+        self.assertEqual(result, True)
+    
+    def test_filterUsername_None(self):
+        result = camra.filterUsername(None, None)
+        self.assertEqual(result, -1)
 
+    def test_filterUsername_short(self):
+        result = camra.filterUsername("abc", "123")
+        self.assertEqual(result, -1)
+    
+    def test_filterUsername_long(self):
+        result = camra.filterUsername("qwertyuiopasdfgjklmzvnkjsfjsfasfd", "qwertyuiopasdfgjklmzvnkjsfjsfasfd")
+        self.assertEqual(result, -1)
 
-    #def test_getLocationSongs(self):
-    #    result = getLocationSongs()
-    #    self.assertIsInstance(result, basestring)
+    def test_filterUsername_specialchars(self):
+        result = camra.filterUsername("~!@#$%^&*()", "~!@#$%^&*()")
+        self.assertEqual(result, -1)
+    
+    def test_filterUsername_specialchars1(self):
+        result = camra.filterUsername("#abcdefg", "$abcdefg")
+        self.assertEqual(result, -1)
+
+    def test_filterUsername_specialchars2(self):
+        result = camra.filterUsername("a%bcdefg", "abc*defg")
+        self.assertEqual(result, -1)
+
+    def test_filterUsername_specialchars3(self):
+        result = camra.filterUsername("abc&defg", "abc&defg")
+        self.assertEqual(result, -1)
+
+    def test_filterUsername_specialchars4(self):
+        result = camra.filterUsername("abc*defg", "abc*defg")
+        self.assertEqual(result, -1)
+
+    def test_filterUsername_specialchars5(self):
+        result = camra.filterUsername("abc(defg", "abc)defg")
+        self.assertEqual(result, -1)
+
+    def test_filterUsername_goodTest(self):
+        result = camra.filterUsername("goodusername", "goodpassword")
+        self.assertEqual(result, 1)
+

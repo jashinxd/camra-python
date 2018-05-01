@@ -79,6 +79,7 @@ def filterUsername(username, password):
     if (filterBadSongs(password)):
         print ("explict language in password not allowed")
         return -1
+    return 1
     
 def createPlaylist():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -1531,6 +1532,7 @@ def init_db():
     db.create_all()
 
 if (__name__ == "__main__"):
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     init_db()
     try:
         stopDB = True
